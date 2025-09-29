@@ -1,0 +1,19 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+title WP3B-11:As an Administrator, I want to calculate the average duration of appointments per physician.
+
+
+
+actor Administrator
+control AppointmentController
+control AppointmentService
+entity AppointmentRepository
+
+Administrator -> AppointmentController : GET /api/appointments/average-duration
+AppointmentController -> AppointmentService : getAverageDurationPerPhysician()
+AppointmentService -> AppointmentRepository : findAll()
+AppointmentRepository --> AppointmentService : List<Appointment>
+AppointmentService --> AppointmentController : Map<Physician, Duration>
+AppointmentController --> Administrator : 200 OK (Physician + AvgDuration)
+
+@enduml

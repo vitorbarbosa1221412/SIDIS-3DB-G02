@@ -1,0 +1,46 @@
+@startuml
+title US-2: As an Administrator I want to register a physician with an optional profile photo
+
+autonumber
+autoactivate on
+
+actor "Administrator" as admin
+participant "PhysicianAPI" as api
+participant "PhysicianService" as service
+participant "Mapper: PhysicianEditMapper" as editMapper
+participant "ViewMapper: PhysicianViewMapper" as viewMapper
+participant "repo: PhysicianRepository" as repo
+participant "Storage: PhotoStorageService" as photoStorage
+participant "obj: Physician" as physician
+participant "Security: AuthContext" as auth
+
+
+admin -> api : POST /physicians\nmultipart: PhysicianCreateDTO + photo
+api -> auth : getAuthenticatedUser()
+auth --> api : AdminUserDetails
+
+
+api -> service : create(dto, photo, admin)
+
+service -> editMapper : toEntity(dto)
+editMapper --> physician : Physician(...)
+editMapper --> service : physician
+
+
+alt photo != null
+    service -> photoStorage : store(photo)
+    photoStorage --> service : photoUrl
+    service -> physician : setPhotoUrl(photoUrl)
+end
+
+
+service -> repo : save(physician)
+repo --> service : savedPhysician
+
+
+service -> viewMapper : toDTO(savedPhysician)
+viewMapper --> service : PhysicianViewDTO
+service --> api : PhysicianViewDTO
+api --> admin : HTTP 201 Created + body(PhysicianViewDTO)
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml
+actor "Anonymous User" as user
+participant "PatientController" as controller
+participant "PatientService" as service
+participant "PatientRepository" as repo
+participant "PasswordEncoder" as pwEncoder
+database "Database" as db
+
+user -> controller: POST /api/registerPatient\n(MultipartFile photo, Patient data)
+activate controller
+
+controller -> service: register(Patient patient, MultipartFile photo)
+activate service
+
+alt photo is provided
+    service -> service: savePhoto(photo)
+    note right: Salva foto e atualiza\npatient.photoUrl
+end
+
+service -> pwEncoder: encode(patient.getPassword())
+activate pwEncoder
+pwEncoder --> service: encodedPassword
+deactivate pwEncoder
+
+service -> service: patient.setPassword(encodedPassword)
+service -> service: generatePatientNumber()
+note right: Gera número único\npara o paciente
+
+service -> repo: save(patient)
+activate repo
+
+repo -> db: INSERT INTO patients
+activate db
+db --> repo: patient
+deactivate db
+
+repo --> service: savedPatient
+deactivate repo
+
+service --> controller: savedPatient
+deactivate service
+
+controller --> user: HTTP 201 Created\n(Patient)
+deactivate controller
+
+@enduml
+

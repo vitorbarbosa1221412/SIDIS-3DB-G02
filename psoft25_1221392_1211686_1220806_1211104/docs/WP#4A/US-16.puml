@@ -1,0 +1,32 @@
+@startuml
+title US16: As Patient I want to view my appointment records
+
+autonumber
+autoactivate on
+
+actor "Patient" as patient
+participant "AppointmentAPI" as api
+participant "AppointmentRecordService" as service
+participant "ViewMapper: AppointmentRecordViewMapper" as viewMapper
+participant "repo: AppointmentRecordRepository" as recordRepo
+participant "Security: AuthContext" as auth
+
+
+patient -> api : GET /patients/me/records\n
+api -> auth : getAuthenticatedUser()
+auth --> api : PatientUserDetails
+
+api -> service : getAppointmentRecordsByPatient(authenticatedUser.patientNumber)
+
+
+service -> recordRepo : findByPatientNumber(authenticatedUser.patientNumber)
+recordRepo --> service : List<AppointmentRecord>
+
+
+service -> viewMapper : toDTOList(records)
+viewMapper --> service : List<AppointmentRecordViewDTO>
+service --> api : List<AppointmentRecordViewDTO>
+api --> patient : HTTP 200 OK + body(List<AppointmentRecordViewDTO>)
+
+@enduml
+

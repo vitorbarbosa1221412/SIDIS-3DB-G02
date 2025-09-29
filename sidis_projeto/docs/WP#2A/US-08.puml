@@ -1,0 +1,34 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+title WP2A-08: As Admin I want to know a patient’s detail given its patient number
+
+autonumber
+autoactivate on
+
+participant "HTTPClient" as http
+participant "PatientController" as controller
+participant "service:PatientService" as service
+participant "repo:PatientRepository" as repo
+participant "obj:Patient" as obj
+participant "mapper:PatientMapper" as mapper
+
+
+http -> controller: GET getPatientByPatientNumber(patientNumber(year/number))-api/patient/{year}/{id}/profile
+
+controller -> service:getPatientByPatientNumber(patientNumber)
+
+service -> repo: getPatientByPatientNumber(patientNumber)
+repo --> service: patient
+
+
+service --> controller: patient
+
+controller -> mapper: toViewMapper(patient)
+mapper --> controller: PatientDTO
+controller --> http: OK (200) + body(PatientDTO)
+
+
+
+
+
+@enduml

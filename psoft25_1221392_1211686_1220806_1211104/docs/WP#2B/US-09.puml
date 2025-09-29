@@ -1,0 +1,16 @@
+@startuml
+actor Administrator
+
+participant "AppointmentController" as Controller
+participant "AppointmentServiceImpl" as Service
+database "AppointmentRepository / PatientRepository" as Repository
+
+Administrator -> Controller : GET /api/appointments/statistics/age-groups
+Controller -> Service : getAppointmentStatsByAgeGroup()
+Service -> Repository : fetch all Appointments
+Service -> Repository : fetch associated Patient info
+Service -> Service : group Appointments by age group
+Service --> Controller : List<AgeGroupStats>
+Controller --> Administrator : ResponseEntity<List<AgeGroupStats>>
+
+@enduml

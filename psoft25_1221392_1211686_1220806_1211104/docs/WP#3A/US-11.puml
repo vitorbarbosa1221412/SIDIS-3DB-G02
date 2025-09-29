@@ -1,0 +1,38 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+title WP2A-11: As a Administrator, I want to schedule an appointment of a patient with a chosen physician byselecting the date, time, and consultation type.
+actor User
+participant "AppointmentController" as Controller
+participant "AppointmentService" as Service
+participant "AppointmentRepository" as Repository
+participant "AppointmentMapper" as Mapper
+database "Database"
+
+User -> Controller : POST /appointments\n(createDTO)
+activate Controller
+
+Controller -> Service : createAppointment(createDTO)
+activate Service
+
+Service -> Repository : save(appointment)
+activate Repository
+
+Repository -> Database : INSERT INTO appointment …
+Database --> Repository : generated Appointment
+deactivate Database
+
+Repository --> Service : Appointment
+deactivate Repository
+
+Service --> Controller : Appointment
+deactivate Service
+
+Controller -> Mapper : toView(Appointment)
+activate Mapper
+
+Mapper --> Controller : AppointmentView
+deactivate Mapper
+
+Controller --> User : 201 Created\nAppointmentView
+deactivate Controller
+@enduml

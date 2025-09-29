@@ -1,0 +1,46 @@
+@startuml
+actor "Anonymous User" as user
+participant "PatientController" as controller
+participant "PatientService" as service
+participant "PatientRepository" as repo
+database "Database" as db
+
+user -> controller: PUT /api/patients/{patientNumber}\n(Patient updatedData)
+
+note left: Requer autenticação\ne role PATIENT
+
+controller -> service: getCurrentPatient()
+
+service --> controller: loggedInPatient
+
+
+controller -> controller: validatePatientAccess\n(loggedInPatient, patientNumber)
+
+
+controller -> service: updatePatient(patientNumber, updatedData)
+
+
+service -> repo: findByPatientNumber(patientNumber)
+
+
+repo -> db: SELECT * FROM patients\nWHERE patient_number = ?
+
+db --> repo: existingPatient
+
+repo --> service: existingPatient
+
+service -> service: updatePatientData\n(existingPatient, updatedData)
+note right:  Permite apenas atualizar dados\npermitidos (informação de contacto, etc.)\nmantendo dados sensíveis
+
+service -> repo: save(existingPatient)
+
+repo -> db: UPDATE patients\nSET ... WHERE patient_number = ?
+
+db --> repo: updatedPatient
+
+repo --> service: updatedPatient
+
+service --> controller: updatedPatient
+
+controller --> user: HTTP 200 OK\n(Updated Patient Data)
+@enduml

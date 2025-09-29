@@ -1,0 +1,59 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+title WP2A-7:As anonymous I want to register as a patient.
+
+autonumber
+autoactivate on
+
+participant "HTTPClient" as http
+participant "AuthAPI" as controller
+participant "service:PatientService" as service
+participant "Mapper:PatientEditMapper" as mapper
+participant "ViewMapper: PatientViewMapper" as vmapper
+participant "PatientNumber" as PatientNumber
+participant "repo:PatientRepository" as repo
+participant "repo:UserRepository" as repoU
+participant "obj:User" as objU
+participant "obj:Patient" as obj
+
+http -> controller: POST registerPatient(createPatientRequest request,)- api/auth/registerPatient
+
+controller -> service:create(createPatientRequest request)
+
+service->mapper: create(request)
+mapper --> obj**:Patient(name, email(username), dateOfBirth, insurance_information, phoneNumber, Dataconsent, password)
+
+mapper --> service: obj
+
+service -> service:Validate(obj)
+service --> service:ok
+
+service --> PatientNumber**:
+service->PatientNumber:getNextPatientNumber(repo)
+PatientNumber -> repo:getLastPatientNumber()
+repo-->PatientNumber: PatientNumber
+PatientNumber --> service: long
+
+service->PatientNumber:generate(long)
+PatientNumber --> service: String:PatientNumber
+service -> obj: setPatientNumber(patientNumber)
+obj--> service: ok
+
+service -> objU**: User.newUser(patient.getName(), passwordEncoder.encode(request.getPassword()),patient.getName(),Role.READER)
+objU --> service: objU
+service -> repoU: save(objU)
+repoU --> service: ok
+
+service -> repo: save(obj)
+repo--> service:ok
+service --> controller: obj
+
+
+
+controller -> vmapper: toViewMapper(obj)
+vmapper --> controller: PatientDTO
+controller --> http: CREATED (201) + body(PatientDTO)
+
+
+
+@enduml

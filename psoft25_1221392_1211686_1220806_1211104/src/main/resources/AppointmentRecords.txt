@@ -1,0 +1,61 @@
+recordNumber;diagnosis;treatmentRecommendation;prescription;appointmentNumber
+1001;Acute Bronchitis;Rest and hydration;Ibuprofen;APPT-1
+1002;Dental Cavity;Filling procedure;Amoxicillin;APPT-2
+1003;Flu Symptoms;Rest and fluids;Paracetamol;APPT-3
+1004;Hypertension;Monitor blood pressure;Lisinopril;APPT-4
+1005;Skin Rash;Apply cream twice daily;Hydrocortisone cream;APPT-5
+1006;General Checkup;Maintain healthy diet;None;APPT-6
+1007;Tooth Extraction;Avoid solid food 48h;Ibuprofen;APPT-7
+1008;Child Fever;Monitor temperature;Acetaminophen;APPT-8
+1009;Chest Pain;ECG and follow-up;Aspirin;APPT-9
+1010;Acne;Apply topical gel;Benzoyl Peroxide;APPT-10
+1011;Migraine;Avoid bright lights;Sumatriptan;APPT-11
+1012;Gingivitis;Improve oral hygiene;Chlorhexidine rinse;APPT-12
+1013;Ear Infection;Warm compress;Amoxicillin;APPT-13
+1014;High Cholesterol;Low-fat diet;Atorvastatin;APPT-14
+1015;Dry Skin;Moisturize daily;Eucerin cream;APPT-15
+1016;Cold Symptoms;Drink warm liquids;None;APPT-16
+1017;Wisdom Tooth Pain;Extraction recommended;Ibuprofen;APPT-17
+1018;Allergic Rhinitis;Avoid allergens;Cetirizine;APPT-18
+1019;Arrhythmia;Holter monitor;Metoprolol;APPT-19
+1020;Sunburn;Cool compress;Aloe Vera gel;APPT-20
+1021;Routine Check;Annual review;None;APPT-21
+1022;Root Canal Follow-up;Pain management;Paracetamol;APPT-22
+1023;Stomach Flu;Stay hydrated;Ondansetron;APPT-23
+1024;Palpitations;Cardio referral;Propranolol;APPT-24
+1025;Eczema;Apply steroid cream;Betamethasone;APPT-25
+1026;Seasonal Flu;Rest and fluids;Oseltamivir;APPT-26
+1027;Broken Molar;Tooth restoration;Amoxicillin;APPT-27
+1028;Sore Throat;Saltwater gargle;Azithromycin;APPT-28
+1029;Heart Murmur;Further tests needed;None;APPT-29
+1030;Psoriasis;UV therapy;Topical steroids;APPT-30
+1031;Migraine;Healthy diet;Paracetamol;APPT-31
+1032;Toothache;Improve oral hygiene;Ibuprofen;APPT-32
+1033;Ear Infection;Avoid allergens;Cetirizine;APPT-33
+1034;Heart Murmur;Cardio referral;Propranolol;APPT-34
+1035;Eczema;UV therapy;Hydrocortisone;APPT-35
+1036;Fatigue;Regular exercise;Lisinopril;APPT-36
+1037;Gingivitis;Filling procedure;Amoxicillin;APPT-37
+1038;Cold Symptoms;Avoid allergens;Cetirizine;APPT-38
+1039;High Cholesterol;Low-fat diet;Aspirin;APPT-39
+1040;Sunburn;UV therapy;Betamethasone;APPT-40
+1041;Fatigue;Monitor blood pressure;Lisinopril;APPT-41
+1042;Wisdom Tooth Pain;Use mouthwash;Amoxicillin;APPT-42
+1043;Child Fever;Pediatric checkup;Acetaminophen;APPT-43
+1044;Heart Murmur;Monitor heart rate;Metoprolol;APPT-44
+1045;Sunburn;Apply cream twice daily;Betamethasone;APPT-45
+1046;Cold;Rest and hydration;Paracetamol;APPT-46
+1047;Broken Molar;Tooth extraction;Ibuprofen;APPT-47
+1048;Child Fever;Avoid allergens;Acetaminophen;APPT-48
+1049;Heart Murmur;Low-fat diet;Atorvastatin;APPT-49
+1050;Skin Rash;Apply cream twice daily;Hydrocortisone;APPT-50
+1051;Migraine;Healthy diet;None;APPT-51
+1052;Broken Molar;Use mouthwash;Amoxicillin;APPT-52
+1053;Child Fever;Avoid allergens;Cetirizine;APPT-53
+1054;Heart Murmur;Monitor heart rate;Metoprolol;APPT-54
+1055;Eczema;UV therapy;Benzoyl Peroxide;APPT-55
+1056;Flu;Rest and hydration;None;APPT-56
+1057;Gingivitis;Filling procedure;Amoxicillin;APPT-57
+1058;Ear Infection;Avoid allergens;Amoxicillin;APPT-58
+1059;Arrhythmia;Low-fat diet;Aspirin;APPT-59
+1060;Skin Rash;UV therapy;Benzoyl Peroxide;APPT-60

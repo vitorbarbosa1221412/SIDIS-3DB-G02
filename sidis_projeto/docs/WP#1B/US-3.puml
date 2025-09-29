@@ -1,0 +1,44 @@
+@startuml
+title US-3: As a Patient I want to view available appointment slots for a physician
+
+autonumber
+autoactivate on
+
+actor "Patient" as patient
+participant "PhysicianAPI" as api
+participant "AuthContext" as auth
+participant "AppointmentSlotService" as slotService
+participant "PhysicianRepository" as physicianRepo
+participant "AppointmentRepository" as apptRepo
+participant "AppointmentSlotViewMapper" as viewMapper
+participant "obj: Physician" as physician
+participant "obj: Appointment" as appointment
+
+
+patient -> api : GET /physicians/{physicianNumber}/available-slots\n
+api -> auth : getAuthenticatedUser()
+auth --> api : PatientUserDetails
+
+
+api -> slotService : getAvailableSlots(physicianNumber, date)
+
+slotService -> physicianRepo : findByPhysicianNumber(physicianNumber)
+physicianRepo --> slotService : Optional<Physician>
+slotService -> slotService : validateWorkingHours(physician, date)
+
+
+slotService -> apptRepo : findByPhysicianAndDate(physician, date)
+apptRepo --> slotService : List<Appointment>
+
+
+slotService -> slotService : generateSlots(physician, appointments, date)
+slotService --> slotService : List<AvailableSlot>
+
+
+slotService -> viewMapper : toDTOList(List<AvailableSlot>)
+viewMapper --> slotService : List<AvailableSlotDTO>
+
+slotService --> api : List<AvailableSlotDTO>
+api --> patient : HTTP 200 OK + body(List<AvailableSlotDTO>)
+
+@enduml

@@ -1,0 +1,56 @@
+US-13.puml
+'https://plantuml.com/sequence-diagram
+@startuml US13_Update_Cancel_Appointment
+title WP2A-13:. As a Patient or Administrator, I want to update or cancel an appointment.
+
+actor User
+participant "AppointmentController" as Controller
+participant "AppointmentService" as Service
+participant "AppointmentRepository" as Repository
+participant "AppointmentMapper" as Mapper
+database "Database"
+
+User -> Controller : PUT /appointments/{id}\n(updateDTO)\nor\nDELETE /appointments/{id}
+activate Controller
+
+Controller -> Service : updateAppointment(id, updateDTO)\nor\ncancelAppointment(id)
+activate Service
+
+Service -> Repository : findById(id)
+activate Repository
+
+Repository -> Database : SELECT * FROM appointment WHERE id=…
+Database --> Repository : Appointment
+deactivate Database
+
+Repository --> Service : Appointment
+deactivate Repository
+
+alt Update DateTime
+    Service -> Service : appointment.setDateTime(updateDTO.dateTime)
+else Cancel
+    Service -> Service : appointment.setStatus(CANCELLED)
+end
+
+Service -> Repository : save(appointment)
+activate Repository
+
+Repository -> Database : UPDATE appointment SET … WHERE id=…
+Database --> Repository : Appointment
+deactivate Database
+
+Repository --> Service : Appointment
+deactivate Repository
+
+Service --> Controller : Appointment
+deactivate Service
+
+Controller -> Mapper : toView(Appointment)
+activate Mapper
+
+Mapper --> Controller : AppointmentView
+deactivate Mapper
+
+Controller --> User : 200 OK\nAppointmentView
+deactivate Controller
+@enduml

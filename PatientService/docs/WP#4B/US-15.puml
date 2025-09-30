@@ -1,0 +1,29 @@
+@startuml
+title US-15: As Physician, I want to generate an electronic prescription
+
+autonumber
+autoactivate on
+
+actor "Physician" as physician
+participant "AppointmentRecordController" as api
+participant "AppointmentRecordService" as service
+participant "repo: AppointmentRecordRepository" as repo
+participant "obj: ElectronicPrescriptionDTO" as dto
+
+physician -> api : GET /api/appointmentRecords/electronic-prescription/{recordNumber}
+api -> service : generateElectronicPrescription(recordNumber)
+
+service -> repo : findElectronicPrescriptionParameters(recordNumber)
+repo --> service : List<Object[]>
+
+alt data empty
+    service --> api : throw NotFoundStatusException
+    api --> physician : HTTP 404 Not Found
+else data found
+    service -> dto : new ElectronicPrescriptionDTO(patientName, physicianName, physicianPhoneNumber, prescription)
+    dto --> service : prescriptionDTO
+    service --> api : List<ElectronicPrescriptionDTO>
+    api --> physician : HTTP 200 OK + body(List<ElectronicPrescriptionDTO>)
+end
+
+@enduml

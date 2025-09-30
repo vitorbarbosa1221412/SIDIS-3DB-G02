@@ -1,0 +1,35 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+title WP2A-09: As Admin I want to search Patient by name
+
+autonumber
+autoactivate on
+
+participant "HTTPClient" as http
+participant "PatientController" as controller
+participant "service:PatientService" as service
+participant "repo:PatientsRepository" as repo
+participant "obj:nameVal" as val
+participant "obj:Patient" as obj
+participant "mapper:PatientMapper" as mapper
+
+
+http -> controller: GET searchPatients(PaginationRequest request, @param name)-api/reader/search
+
+controller -> service:getPatientByName(request.getPage(), name)
+
+service -> val: validate(name)
+val --> service: ok
+
+service -> repo: getPatientByName(page, name)
+repo --> service: patient
+
+service --> controller: patient
+
+controller -> mapper: toViewMapper(patient)
+mapper --> controller: PatientsDTO
+controller --> http: OK (200) + body(PatientsDTO)
+
+
+
+@enduml

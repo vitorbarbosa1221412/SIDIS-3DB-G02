@@ -62,6 +62,11 @@ public class PatientController {
         return patientService.getPatientById(id);
     }
 
+    @GetMapping("/number/{number}")
+    public ResponseEntity<Patient> getPatientByNumber(@PathVariable String number) {
+        return patientService.getPatientByNumber(number);
+    }
+
     @GetMapping("/name/{name}/profile")
     public ResponseEntity<List<Patient>> searchPatientsByName(
             @PathVariable String name,

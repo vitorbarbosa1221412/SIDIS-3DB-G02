@@ -92,6 +92,16 @@ public class PhysicianServiceImpl implements PhysicianService {
     }
 
     @Override
+    public ResponseEntity<Physician> getPhysicianByNumber(String physicianNumber) {
+        Physician physician = physicianRepo.findByPhysicianNumber(physicianNumber).orElse(null);
+        if (physician == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Physician not found");
+        } else {
+            return new ResponseEntity<>(physician, HttpStatus.OK);
+        }
+    }
+
+    @Override
     public List<Physician> getAllPhysicians(Page page) {
         Pageable pageable = PageRequest.of(page.getNumber() - 1, page.getLimit());
         return physicianRepo.findAll(pageable).getContent();

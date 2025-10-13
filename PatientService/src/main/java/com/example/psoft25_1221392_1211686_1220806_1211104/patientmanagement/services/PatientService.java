@@ -14,6 +14,8 @@ public interface PatientService {
 
     ResponseEntity<Patient> getPatientById(Long id);
 
+    ResponseEntity<Patient> getPatientByNumber(String number);
+
     List<Patient> searchByPatientName(String name, Page page);
 
     List<Patient> getAllPatients();

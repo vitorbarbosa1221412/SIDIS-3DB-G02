@@ -44,6 +44,12 @@ public class PhysicianController {
         return physicianService.getPhysicianById(id);
     }
 
+    @Operation(summary = "Get a Physician by his number")
+    @GetMapping("/number/{number}")
+    public ResponseEntity<Physician> getPhysicianByNumber(@PathVariable String number) {
+        return physicianService.getPhysicianByNumber(number);
+    }
+
     @GetMapping
     public ResponseEntity<List<Physician>> searchPhysicians(
             @RequestParam(name = "name", required = false) String name,

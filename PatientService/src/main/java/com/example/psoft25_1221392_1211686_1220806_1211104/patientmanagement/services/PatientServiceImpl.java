@@ -70,6 +70,16 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    public ResponseEntity<Patient> getPatientByNumber(String number) {
+        Patient patient = patientRepository.findByPatientNumber(number).orElse(null);
+        if (patient == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found");
+        } else {
+            return new ResponseEntity<>(patient, HttpStatus.OK);
+        }
+    }
+
+    @Override
     public List<Patient> searchByPatientName(String name, Page page) {
         if (page == null) {
             page = new Page(1, 5);

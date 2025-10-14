@@ -36,7 +36,7 @@ public class ApiConfig {
     private ClientHttpRequestInterceptor bearerTokenInterceptor() {
         return (request, body, execution) -> {
             // Normally, you'd dynamically fetch a token from your auth server here
-            request.getHeaders().add("Authorization", "Bearer " + "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxLGFkbWluQGV4YW1wbGUuY29tIiwicm9sZXMiOiJBRE1JTiIsImlzcyI6ImV4YW1wbGUuaW8iLCJleHAiOjE3NjA0MjUzNzgsImlhdCI6MTc2MDM4OTM3OCwidXNlcklkIjoxfQ.GnP1zOi8dmgtxANE1Ji4ENFHAtVfOWi-W1aAqfuNCcCq8P1CqRsM1IBY5IereIYX0wKalP--qeHQAIp2tlMzMjNvbfZKonp6EY82Omzb1oMMywBArNyW4_rZH5fjApA7lSylhaztPhEfq2nhgQOS7nN4Cw-dgQNktFUvBMwl80Gc4c-IpY7k7s1WyTLRR_0dRAYkQOum-Q9g1OPve2t5dM2MbThRJ0zkyY3-ON5mFa2elepWRcC4xo2N9i55A33Or8Pze7pjMXLpQWcZrbdQvn2KxCx0apGclzAg2o7i56num3N2J7LadjE6Gc8yKGU3pKFV_rRU7hAmnXRfO-V0295j3L37u6ZHls5A2BIL4rYbQ-uR1Pf_yS0dImXb-hvxnh0eNWsBTFYVKUN5ddyEvHTmCbQB7j3K3w_Bu-ubAsYrkhkqDc1C_bk8GlqDw6Q8kGOHamwTzHiaqAI08r-gALt5nu0uEyVnbVWlNv2y_mKPtTmn068FmRQCIfvHTAvs-bA53SULeWwhmuXaGGIFFsc0nHJvtKxHgVJdgt9ZBqde-dmYerJP_5p371LWmNqeCqbCB5J5QxGwzRrNaskmpZI8eRv4h_NcdklM66H2tZ5MIOJJRKxFzQiA6THkxjxS7fLGSj0_3ZQ4QWgstQIkuPm5lDNQNowHzA4UaEh9Uu0");
+            request.getHeaders().add("Authorization", "Bearer " + getAccessToken());
             return execution.execute(request, body);
         };
     }

@@ -2,22 +2,18 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagemen
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.services.*;
-import com.example.psoft25_1221392_1211686_1220806_1211104.exceptions.NotFoundException;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.AgeGroupStats;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -25,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping("api/appointments")
 public class AppointmentController {
-
     @Autowired
     @Qualifier("restTemplateWithAuth")
     private RestTemplate restTemplate;
@@ -44,12 +39,10 @@ public class AppointmentController {
         return ResponseEntity.ok(created);
     }
 
-
- /* @GetMapping("/patient/{patientId}")
-  public ResponseEntity<Appointment> getAppointmentsByPatient(@PathVariable Long patientNumber) {
-       return appointmentService.getAppointmentByPatientNumber(patientId);
-   }*/
-
+    /* @GetMapping("/patient/{patientId}")
+    public ResponseEntity<Appointment> getAppointmentsByPatient(@PathVariable Long patientNumber) {
+        return appointmentService.getAppointmentByPatientNumber(patientId);
+    }*/
 
     @PutMapping("/{appointmentNumber}")
     public ResponseEntity<Appointment> updateAppointment(
@@ -59,14 +52,10 @@ public class AppointmentController {
         return ResponseEntity.ok(updated);
     }
 
-
-
-
     @GetMapping("/{appointmentNumber}")
     public ResponseEntity<Appointment> getAppointmentByNumber(@PathVariable String appointmentNumber) {
         return appointmentService.viewAppointmentByNumber(appointmentNumber);
     }
-
 
     @GetMapping
     public ResponseEntity<List<Appointment>> getAllAppointments() {
@@ -95,17 +84,14 @@ public class AppointmentController {
             @AuthenticationPrincipal Jwt principal,
             @Valid @RequestBody ScheduleAppointmentRequest request
     ) {
-        // Obter userId do token
         Long userId = principal.getClaim("userId");
 
-        // Procurar o Patient com esse userId
         String patientUrl = PATIENT_SERVICE_URL + "id/" +userId + "/profile";
         Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
 
-        // Obter patientNumber desse Patient
+        // assert patient != null;
         String patientNumber = patient.getPatientNumber();
 
-        // Chamar o service como já tens
         Appointment appointment = appointmentService.scheduleAppointmentByPatient(
                 patientNumber,
                 request.getPhysicianNumber(),
@@ -115,20 +101,30 @@ public class AppointmentController {
 
         return new ResponseEntity<>(appointment, HttpStatus.CREATED);
     }
+
     @GetMapping("/my-appointments")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<List<AppointmentView>> getMyAppointments(@AuthenticationPrincipal Jwt principal) {
         Long userId = principal.getClaim("userId");
+        String token = principal.getTokenValue();
 
-        String patientUrl = PATIENT_SERVICE_URL + "id/" +userId + "/profile";
-        Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
+        String patientUrl = PATIENT_SERVICE_URL + "id/" + userId + "/profile";
+
+        ResponseEntity<Patient> response = restTemplate.exchange(
+                patientUrl,
+                HttpMethod.GET,
+                entity,
+                Patient.class
+        );
+
+        Patient patient = response.getBody();
         String patientNumber = patient.getPatientNumber();
 
-        // Obtem a lista de Appointment
         List<Appointment> history = appointmentService.getAppointmentHistory(patientNumber);
-
-        // Converte para AppointmentView
         List<AppointmentView> views = appointmentMapper.toView(history);
 
         return ResponseEntity.ok(views);
@@ -138,7 +134,6 @@ public class AppointmentController {
     public ResponseEntity<List<AgeGroupStats>> getAppointmentStatisticsByAgeGroup() {
         return ResponseEntity.ok(appointmentService.getAppointmentStatsByAgeGroup());
     }
-
 
     @GetMapping("/upcoming")
     @PreAuthorize("hasRole('ADMIN')")
@@ -159,7 +154,3 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getMonthlyReport());
     }
 }
-
-
-
-

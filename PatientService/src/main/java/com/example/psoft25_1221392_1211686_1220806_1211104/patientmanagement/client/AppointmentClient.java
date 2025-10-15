@@ -1,0 +1,115 @@
+package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client;
+
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentDTO;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.config.ExternalServiceConfig;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Optional;
+
+
+@Component
+public class AppointmentClient {
+
+    private final RestTemplate restTemplate;
+    private final ExternalServiceConfig config;
+
+    public AppointmentClient(RestTemplate restTemplate, ExternalServiceConfig config) {
+        this.restTemplate = restTemplate;
+        this.config = config;
+    }
+
+
+    public List<AppointmentDTO> getAppointmentHistory(String patientNumber) {
+        try {
+            //
+            //
+            /*
+            String url = config.getAppointmentServiceUrl() + "/patient/" + patientNumber + "/history";
+            AppointmentDTO[] appointments = restTemplate.getForObject(url, AppointmentDTO[].class);
+            return appointments != null ? List.of(appointments) : List.of();
+            */
+            
+            // TEMPORARY: Return empty list for standalone execution
+            return List.of();
+        } catch (Exception e) {
+            // Log the error and return empty list
+            System.err.println("Error calling Appointment Service: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+
+    public List<AppointmentDTO> getUpcomingAppointments(String patientNumber) {
+        try {
+            //
+            //
+            /*
+            String url = config.getAppointmentServiceUrl() + "/patient/" + patientNumber + "/upcoming";
+            AppointmentDTO[] appointments = restTemplate.getForObject(url, AppointmentDTO[].class);
+            return appointments != null ? List.of(appointments) : List.of();
+            */
+
+            return List.of();
+        } catch (Exception e) {
+            System.err.println("Error calling Appointment Service: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+
+    public Optional<AppointmentDTO> getAppointmentByNumber(String appointmentNumber) {
+        try {
+            //
+            //
+            /*
+            String url = config.getAppointmentServiceUrl() + "/" + appointmentNumber;
+            AppointmentDTO appointment = restTemplate.getForObject(url, AppointmentDTO.class);
+            return Optional.ofNullable(appointment);
+            */
+
+            return Optional.empty();
+        } catch (Exception e) {
+            System.err.println("Error calling Appointment Service: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+
+    public Optional<AppointmentDTO> createAppointment(Object appointmentRequest) {
+        try {
+            //
+            //
+            /*
+            String url = config.getAppointmentServiceUrl();
+            AppointmentDTO appointment = restTemplate.postForObject(url, appointmentRequest, AppointmentDTO.class);
+            return Optional.ofNullable(appointment);
+            */
+
+            return Optional.empty();
+        } catch (Exception e) {
+            System.err.println("Error calling Appointment Service: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+
+    public boolean cancelAppointment(String appointmentNumber) {
+        try {
+            //
+            //
+            /*
+            String url = config.getAppointmentServiceUrl() + "/" + appointmentNumber + "/cancel";
+            restTemplate.delete(url);
+            return true;
+            */
+            
+
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error calling Appointment Service: " + e.getMessage());
+            return false;
+        }
+    }
+}

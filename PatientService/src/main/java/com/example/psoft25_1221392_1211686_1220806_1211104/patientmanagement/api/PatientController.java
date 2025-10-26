@@ -1,8 +1,11 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.api;
 
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentDTO;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.PhysicianDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.services.*;
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -17,7 +20,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/patients")
@@ -26,14 +33,24 @@ public class PatientController {
 
     private final PatientService patientService;
     private final PatientViewMapper mapper;
+    private final PatientIntegrationService integrationService;
+
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PatientView> createPatient(
-            @Valid @RequestPart("patient") CreatePatientRequest request,
+            @RequestPart("patient") String patientJson,
             @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture,
             HttpServletRequest servletRequest) {
 
         System.out.println("Content-Type recebido: " + servletRequest.getContentType());
+
+        CreatePatientRequest request;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            request = mapper.readValue(patientJson, CreatePatientRequest.class);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         if (profilePicture != null) {
             request.setProfilePicture(profilePicture);
@@ -41,6 +58,24 @@ public class PatientController {
 
         Patient patient = patientService.createPatient(request);
 
+        return new ResponseEntity<>(mapper.toPatientView(patient), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/debug/ids")
+    public ResponseEntity<List<Long>> getAllPatientIds() {
+        List<Patient> patients = patientService.getAllPatients();
+        if (patients == null || patients.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        List<Long> ids = patients.stream()
+                .map(Patient::getId)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(ids, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/json", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PatientView> createPatientJson(@Valid @RequestBody CreatePatientRequest request) {
+        Patient patient = patientService.createPatient(request);
         return new ResponseEntity<>(mapper.toPatientView(patient), HttpStatus.CREATED);
     }
 
@@ -58,17 +93,25 @@ public class PatientController {
 
 
     @GetMapping("/id/{id}/profile")
-    public ResponseEntity<Patient> getPatientById(@PathVariable Long id) {
-        return patientService.getPatientById(id);
+    public ResponseEntity<PatientView> getPatientById(@PathVariable Long id) {
+        ResponseEntity<Patient> response = patientService.getPatientById(id);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            return new ResponseEntity<>(response.getStatusCode());
+        }
+        return new ResponseEntity<>(mapper.toPatientView(response.getBody()), HttpStatus.OK);
     }
 
     @GetMapping("/number/{number}")
-    public ResponseEntity<Patient> getPatientByNumber(@PathVariable String number) {
-        return patientService.getPatientByNumber(number);
+    public ResponseEntity<PatientView> getPatientByNumber(@PathVariable String number) {
+        ResponseEntity<Patient> response = patientService.getPatientByNumber(number);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            return new ResponseEntity<>(response.getStatusCode());
+        }
+        return new ResponseEntity<>(mapper.toPatientView(response.getBody()), HttpStatus.OK);
     }
 
     @GetMapping("/name/{name}/profile")
-    public ResponseEntity<List<Patient>> searchPatientsByName(
+    public ResponseEntity<List<PatientView>> searchPatientsByName(
             @PathVariable String name,
             @RequestParam(name = "page", defaultValue = "1") int pageNumber,
             @RequestParam(name = "limit", defaultValue = "10") int pageLimit) {
@@ -85,7 +128,7 @@ public class PatientController {
         if (patients == null || patients.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(patients, HttpStatus.OK);
+        return new ResponseEntity<>(mapper.toPatientViewList(patients), HttpStatus.OK);
     }
 
 

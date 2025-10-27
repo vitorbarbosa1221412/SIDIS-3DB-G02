@@ -25,8 +25,6 @@ public class AppointmentController {
     @Qualifier("restTemplateWithAuth")
     private RestTemplate restTemplate;
 
-    private final String PATIENT_SERVICE_URL = "http://localhost:8099/api/patients/";
-
     @Autowired
     private AppointmentService appointmentService;
 
@@ -86,14 +84,8 @@ public class AppointmentController {
     ) {
         Long userId = principal.getClaim("userId");
 
-        String patientUrl = PATIENT_SERVICE_URL + "id/" +userId + "/profile";
-        Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
-
-        // assert patient != null;
-        String patientNumber = patient.getPatientNumber();
-
         Appointment appointment = appointmentService.scheduleAppointmentByPatient(
-                patientNumber,
+                userId,
                 request.getPhysicianNumber(),
                 request.getDateTime(),
                 request.getConsultationType()
@@ -106,25 +98,7 @@ public class AppointmentController {
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<List<AppointmentView>> getMyAppointments(@AuthenticationPrincipal Jwt principal) {
         Long userId = principal.getClaim("userId");
-        String token = principal.getTokenValue();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        String patientUrl = PATIENT_SERVICE_URL + "id/" + userId + "/profile";
-
-        ResponseEntity<Patient> response = restTemplate.exchange(
-                patientUrl,
-                HttpMethod.GET,
-                entity,
-                Patient.class
-        );
-
-        Patient patient = response.getBody();
-        String patientNumber = patient.getPatientNumber();
-
-        List<Appointment> history = appointmentService.getAppointmentHistory(patientNumber);
+        List<Appointment> history = appointmentService.getAppointmentHistory(userId);
         List<AppointmentView> views = appointmentMapper.toView(history);
 
         return ResponseEntity.ok(views);

@@ -31,12 +31,12 @@ public interface AppointmentService {
 
     List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date);
 
-    Appointment scheduleAppointmentByPatient(String patientNumber, String physicianNumber, LocalDateTime dateTime, ConsultationType type);
+    Appointment scheduleAppointmentByPatient(Long userId, String physicianNumber, LocalDateTime dateTime, ConsultationType type);
 
     List<AgeGroupStats> getAppointmentStatsByAgeGroup();
 
 
-    List<Appointment> getAppointmentHistory(String patientNumber);
+    List<Appointment> getAppointmentHistory(Long userId);
 
     //Lista as próximas consultas
     List<Appointment> getUpcomingAppointments();

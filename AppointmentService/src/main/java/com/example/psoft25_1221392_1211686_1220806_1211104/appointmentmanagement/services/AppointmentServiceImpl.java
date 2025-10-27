@@ -15,10 +15,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.*;
@@ -32,10 +36,20 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Qualifier("restTemplateWithAuth")
     private RestTemplate restTemplate;
 
+    @Value("${patient.port}")
+    private int patientPort;
 
-    private final String PHYSICIAN_SERVICE_URL = "http://localhost:8082/api/physicians/";
+    @Value("${physician.port}")
+    private int physicianPort;
 
-    private final String PATIENT_SERVICE_URL = "http://localhost:8099/api/physicians/";
+    @Value("${PHYSICIAN_SERVICE_URL}")
+    private String url_physician;
+
+    @Value("${PATIENT_SERVICE_URL}")
+    private String url_patient;
+
+    @Value("${SERVER_URL}")
+    private String serverUrl;
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -103,7 +117,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date) {
-        String physicianUrl = PHYSICIAN_SERVICE_URL + "/number/" + physicianNumber;
+        String physicianUrl = serverUrl + physicianPort + url_physician + "number/" + physicianNumber;
         Physician physician = restTemplate.getForObject(physicianUrl, Physician.class);
 
         // 1. Obter o médico
@@ -143,12 +157,62 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .collect(Collectors.toList());
     }
     @Override
-    public Appointment scheduleAppointmentByPatient(String patientNumber, String physicianNumber, LocalDateTime dateTime, ConsultationType type) {
+    public Appointment scheduleAppointmentByPatient(Long userId, String physicianNumber, LocalDateTime dateTime, ConsultationType type) {
+        int i;
+        for(i = patientPort; i <= patientPort + 999; i++) {
+            try {
+                ResponseEntity<Patient> response = restTemplate.getForEntity(serverUrl + i + url_patient + "id/" +userId + "/profile", Patient.class);
+                if (response.getStatusCode() != HttpStatus.OK) {
+                    throw new ResponseStatusException(response.getStatusCode(),
+                            "Service at port " + i + " responded with status: " + response.getStatusCode());
 
-        String patientUrl = PATIENT_SERVICE_URL + "/number/" + patientNumber;
+                }
+
+
+
+            } catch (HttpClientErrorException | HttpServerErrorException ex) {
+                // For 4xx or 5xx HTTP errors that cause exceptions to be thrown
+                throw new ResponseStatusException(ex.getStatusCode(),
+                        "Service at port " + i + " returned error: " + ex.getStatusCode());
+            } catch (ResourceAccessException ex) {
+                // Service unreachable at this port — optionally continue trying next port
+                // Or throw if you want to fail fast
+            }
+        }
+
+
+
+        String patientUrl = serverUrl + i + url_patient + "id/" +userId + "/profile";
         Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
 
-        String physicianUrl = PHYSICIAN_SERVICE_URL + "/number/" + physicianNumber;
+        // assert patient != null;
+        String patientNumber = patient.getPatientNumber();
+
+        patientUrl = serverUrl + i + url_patient + "/number/" + patientNumber;
+        patient = restTemplate.getForObject(patientUrl, Patient.class);
+
+        for(i = physicianPort; i <= physicianPort + 999; i++) {
+            try {
+                ResponseEntity<Patient> response = restTemplate.getForEntity(serverUrl + i + url_physician, Patient.class);
+                if (response.getStatusCode() != HttpStatus.OK) {
+                    throw new ResponseStatusException(response.getStatusCode(),
+                            "Service at port " + i + " responded with status: " + response.getStatusCode());
+
+                }
+
+
+
+            } catch (HttpClientErrorException | HttpServerErrorException ex) {
+                // For 4xx or 5xx HTTP errors that cause exceptions to be thrown
+                throw new ResponseStatusException(ex.getStatusCode(),
+                        "Service at port " + i + " returned error: " + ex.getStatusCode());
+            } catch (ResourceAccessException ex) {
+                // Service unreachable at this port — optionally continue trying next port
+                // Or throw if you want to fail fast
+            }
+        }
+
+        String physicianUrl = serverUrl + i + url_physician + "/number/" + physicianNumber;
         Physician physician = restTemplate.getForObject(physicianUrl, Physician.class);
 
         if (dateTime.isBefore(LocalDateTime.now())) {
@@ -208,7 +272,26 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<Appointment> getAppointmentHistory(String patientNumber) {
+    public List<Appointment> getAppointmentHistory(Long userId) {
+        int i =  patientPort;
+        for(i = patientPort; i <= patientPort + 999; i++) {
+            try {
+                ResponseEntity<Patient> response = restTemplate.getForEntity(
+                        "http://localhost:" + i + "/api/patients/id/" + userId + "/profile", Patient.class);
+
+                if (response.getStatusCode() == HttpStatus.OK || response.getBody() != null) {
+                    break;
+                }
+            } catch (ResourceAccessException e) {
+                // This is likely due to connection issues, e.g., wrong port
+                System.out.println("Cannot connect to port " + i + ": " + e.getMessage());
+                break;  // or handle accordingly
+            }
+        }
+
+        String patientUrl = "http://localhost:" + i + "/api/patients/id/" + userId + "/profile";
+        Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
+        String patientNumber = patient.getPatientNumber();
         return appointmentRepository.findByPatient_PatientNumberOrderByDateTimeDesc(patientNumber);
     }
 

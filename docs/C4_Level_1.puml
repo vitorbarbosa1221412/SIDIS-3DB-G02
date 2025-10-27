@@ -1,0 +1,24 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context diagram for the Healthcare Administration Platform (HAP).
+
+Person(patient, "Patient", "A patient of the platform, with personal information and appointments.")
+Person(physician, "Physician", "As appointments with the patients.")
+
+System(frontend, "Front-End App", "Application that receives the HTTPS messages, like POSTMAN")
+
+System_Ext(PatientService, "Patient Service", "The Service for the Patients Back-End and Database.")
+System_Ext(PhysicianService, "Physician Service", "The Service for the Physicians Back-End and Database.")
+System_Ext(AppointmentService, "Appointment Service", "The Service for the Appointments Back-End and Database.")
+
+Rel(patient, frontend, "Uses")
+Rel(physician, frontend, "Uses")
+BiRel_L(PatientService, frontend, "communicate")
+BiRel_R(PhysicianService, frontend, "communicate")
+BiRel_U(AppointmentService, frontend, "communicate")
+BiRel_U(AppointmentService, PatientService, "communicate")
+BiRel_U(AppointmentService, PhysicianService, "communicate")
+@enduml

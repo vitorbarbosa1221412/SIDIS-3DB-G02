@@ -11,6 +11,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.ShallowEtagHeaderFilter;
 
@@ -35,16 +39,23 @@ public class ApiConfig {
 
     private ClientHttpRequestInterceptor bearerTokenInterceptor() {
         return (request, body, execution) -> {
-            // Normally, you'd dynamically fetch a token from your auth server here
             request.getHeaders().add("Authorization", "Bearer " + getAccessToken());
             return execution.execute(request, body);
         };
     }
 
-    // For demo: Static token. Replace with real token fetching logic
     private String getAccessToken() {
-        return "your-static-or-dynamic-access-token";
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuthToken = (JwtAuthenticationToken) authentication;
+            return jwtAuthToken.getToken().getTokenValue();
+        }
+
+        // fallback or anonymous
+        return null;
     }
+
 
     /*
      * OpenAPI

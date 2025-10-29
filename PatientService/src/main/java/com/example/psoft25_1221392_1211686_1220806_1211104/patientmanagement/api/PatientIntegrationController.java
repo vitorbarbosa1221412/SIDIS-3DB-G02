@@ -1,6 +1,7 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.api;
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentDTO;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentRecordDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.PhysicianDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.repositories.PatientRepository;
@@ -121,7 +122,7 @@ public class PatientIntegrationController {
         }
     }
 
-    @PostMapping("/appointments/scheduleAppointment")
+   /* @PostMapping("/appointments/scheduleAppointment")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<AppointmentDTO> scheduleAppointment(
             @AuthenticationPrincipal Jwt principal,
@@ -154,7 +155,7 @@ public class PatientIntegrationController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-    }
+    }*/
 
     @GetMapping("/appointments/search")
     @PreAuthorize("hasRole('PATIENT')")
@@ -192,6 +193,25 @@ public class PatientIntegrationController {
     public ResponseEntity<Void> cancelAppointment(@PathVariable String appointmentNumber) {
         boolean success = integrationService.cancelAppointment(appointmentNumber);
         return success ? ResponseEntity.noContent().build() : ResponseEntity.badRequest().build();
+    }
+
+    @GetMapping("/appointmentRecords/my-records")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<List<AppointmentRecordDTO>> getMyAppointmentRecords(@AuthenticationPrincipal Jwt principal) {
+        try {
+            Long userId = principal.getClaim("userId");
+            
+            Patient patient = patientRepository.findByUser_Id(userId)
+                    .orElse(null);
+            if (patient == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            
+            List<AppointmentRecordDTO> records = integrationService.getAppointmentRecords(patient.getPatientNumber());
+            return ResponseEntity.ok(records);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }

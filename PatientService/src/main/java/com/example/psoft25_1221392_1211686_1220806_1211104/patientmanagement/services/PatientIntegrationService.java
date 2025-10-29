@@ -3,6 +3,7 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.se
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.AppointmentClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.PhysicianClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentDTO;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentRecordDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.PhysicianDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import lombok.RequiredArgsConstructor;
@@ -122,5 +123,9 @@ public class PatientIntegrationService {
 
 	public List<AppointmentDTO> searchAppointmentsByPhysician(String physicianName) {
 		return appointmentClient.searchAppointmentsByPhysician(physicianName);
+	}
+
+	public List<AppointmentRecordDTO> getAppointmentRecords(String patientNumber) {
+		return appointmentClient.getAppointmentRecords(patientNumber);
 	}
 }

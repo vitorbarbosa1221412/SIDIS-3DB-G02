@@ -1,25 +1,11 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.infrastructure.repositories.impl;
 
-
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.AgeGroupStats;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.infrastructure.repositories.impl.AppointmentRepoCustom;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.AppointmentStatus;
 
@@ -52,10 +38,10 @@ public class AppointmentRepoCustomImpl implements AppointmentRepoCustom {
     }
 
     @Override
-    public List<Appointment> findUpcomingForPatient(Long patientId) {
+    public List<Appointment> findUpcomingForPatient(String patientId) {
         TypedQuery<Appointment> q = em.createQuery(
                 "SELECT a FROM Appointment a "
-                        + "WHERE a.patient.id = :pid "
+                        + "WHERE a.patientId = :pid "
                         + "  AND a.status <> :cancelled "
                         + "ORDER BY a.dateTime ASC",
                 Appointment.class);
@@ -73,7 +59,4 @@ public class AppointmentRepoCustomImpl implements AppointmentRepoCustom {
             em.merge(a);
         }
     }
-
-
-
 }

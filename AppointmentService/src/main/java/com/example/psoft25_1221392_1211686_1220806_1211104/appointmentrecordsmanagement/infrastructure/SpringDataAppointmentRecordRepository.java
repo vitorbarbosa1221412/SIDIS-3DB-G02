@@ -2,20 +2,14 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsma
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.model.AppointmentRecord;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.repositories.AppointmentRecordRepository;
-import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.infrastructure.AppointmentRecordRepoCustom;
-import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.services.Page;
 import com.example.psoft25_1221392_1211686_1220806_1211104.exceptions.NotFoundException;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
-
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -50,12 +44,11 @@ public interface SpringDataAppointmentRecordRepository extends AppointmentRecord
     List<AppointmentRecord> findByAppointment_Patient_PatientNumber(String patientNumber);
     List<AppointmentRecord> getAppointmentRecordByRecordNumber(Long recordNumber);
 
-    @Query("SELECT ar FROM AppointmentRecord ar WHERE ar.appointment.patient = :patient")
-    List<AppointmentRecord> getAppointmentRecordByPatient(Patient patient);
+//    @Query("SELECT ar FROM AppointmentRecord ar WHERE ar.appointment.patientId = :patient")
+//    List<AppointmentRecord> getAppointmentRecordByPatient(String patientId);
 
-    @Query("SELECT ar.appointment.patient.name, " +
-            "ar.appointment.physician.name, " +
-            "ar.appointment.physician.phoneNumber, " +
+    @Query("SELECT ar.appointment.patientId, " +
+            "ar.appointment.physicianId, " +
             "ar.prescription " +
             "FROM AppointmentRecord ar " +
             "WHERE ar.recordNumber = :recordNumber")

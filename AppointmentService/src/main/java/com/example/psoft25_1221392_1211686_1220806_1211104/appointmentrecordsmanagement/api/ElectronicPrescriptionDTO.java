@@ -6,8 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ElectronicPrescriptionDTO {
-    private String patientName;
-    private String physicianName;
-    private String physicianPhoneNumber;
+    private String patientId;
+    private String physicianId;
     private String prescription;
 }

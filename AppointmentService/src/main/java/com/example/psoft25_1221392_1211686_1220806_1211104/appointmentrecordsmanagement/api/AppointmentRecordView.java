@@ -15,20 +15,12 @@ public class AppointmentRecordView {
     private String treatmentRecommendation;
     private String prescription;
     private Long recordNumber;
-
-    // Dados da Appointment
     private String appointmentNumber;
     private LocalDateTime appointmentDateTime;
     private String consultationType;
     private String status;
-
-    // Dados do Patient (limitados)
-    private String patientNumber;
-    private String patientEmail;
-
-    // Dados do Physician (limitados)
-    private String physicianName;
-    private String physicianNumber;
+    private String patientId;
+    private String physicianId;
 }
 
 

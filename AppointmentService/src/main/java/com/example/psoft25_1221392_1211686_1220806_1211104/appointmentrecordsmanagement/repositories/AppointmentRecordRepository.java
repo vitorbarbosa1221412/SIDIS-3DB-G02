@@ -2,13 +2,10 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsma
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.model.AppointmentRecord;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
-import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.services.Page;
 import com.example.psoft25_1221392_1211686_1220806_1211104.exceptions.NotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +23,7 @@ public interface AppointmentRecordRepository extends JpaRepository <AppointmentR
 
     Optional<AppointmentRecord> findByRecordNumber(Long recordNumber);
 
-    List<AppointmentRecord> findByAppointment_Patient(Patient patient);
+//    List<AppointmentRecord> findByAppointment_PatientId(String patientId);
 
     @Query("SELECT MAX(ar.recordNumber) FROM AppointmentRecord ar WHERE FUNCTION('YEAR', ar.appointment) = :year")
     Long getLastRecordNumber(@Param("year") int year);
@@ -38,9 +35,8 @@ public interface AppointmentRecordRepository extends JpaRepository <AppointmentR
     @Query("SELECT ar FROM AppointmentRecord ar WHERE ar.appointment.patient.patientNumber = :patientNumber AND ar.recordNumber = :recordNumber")
     List<AppointmentRecord> searchByPatientNumberAndRecordNumber(String patientNumber, Long recordNumber);
 
-    @Query("SELECT ar.appointment.patient.name, " +
-            "ar.appointment.physician.name, " +
-            "ar.appointment.physician.phoneNumber, " +
+    @Query("SELECT ar.appointment.patientId, " +
+            "ar.appointment.physicianId, " +
             "ar.prescription " +
             "FROM AppointmentRecord ar " +
             "WHERE ar.recordNumber = :recordNumber")

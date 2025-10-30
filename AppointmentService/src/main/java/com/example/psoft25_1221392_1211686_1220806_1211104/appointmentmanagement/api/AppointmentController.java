@@ -2,8 +2,6 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagemen
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.services.*;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.AgeGroupStats;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,10 +35,10 @@ public class AppointmentController {
         return ResponseEntity.ok(created);
     }
 
-    /* @GetMapping("/patient/{patientId}")
-    public ResponseEntity<Appointment> getAppointmentsByPatient(@PathVariable Long patientNumber) {
-        return appointmentService.getAppointmentByPatientNumber(patientId);
-    }*/
+//    @GetMapping("/patient/{patientId}")
+//    public ResponseEntity<Appointment> getAppointmentsByPatient(@PathVariable Long patientNumber) {
+//        return appointmentService.getAppointmentByPatientNumber(patientId);
+//    }
 
     @PutMapping("/{appointmentNumber}")
     public ResponseEntity<Appointment> updateAppointment(
@@ -61,7 +59,6 @@ public class AppointmentController {
         return ResponseEntity.ok(list);
     }
 
-    // cancelar
     @DeleteMapping("/{appointmentNumber}")
     public ResponseEntity<Void> cancelAppointment(@PathVariable String appointmentNumber) {
         appointmentService.cancelByAppointmentNumber(appointmentNumber);
@@ -104,10 +101,10 @@ public class AppointmentController {
         return ResponseEntity.ok(views);
     }
 
-    @GetMapping("/statistics/age-groups")
-    public ResponseEntity<List<AgeGroupStats>> getAppointmentStatisticsByAgeGroup() {
-        return ResponseEntity.ok(appointmentService.getAppointmentStatsByAgeGroup());
-    }
+//    @GetMapping("/statistics/age-groups")
+//    public ResponseEntity<List<AgeGroupStats>> getAppointmentStatisticsByAgeGroup() {
+//        return ResponseEntity.ok(appointmentService.getAppointmentStatsByAgeGroup());
+//    }
 
     @GetMapping("/upcoming")
     @PreAuthorize("hasRole('ADMIN')")
@@ -116,11 +113,11 @@ public class AppointmentController {
         return ResponseEntity.ok(upcomingAppointments);
     }
 
-    @GetMapping("/average-duration")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<PhysicianAverageDurationDTO>> getAverageDurationPerPhysician() {
-        return ResponseEntity.ok(appointmentService.getAverageAppointmentDurationPerPhysician());
-    }
+//    @GetMapping("/average-duration")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<List<PhysicianAverageDurationDTO>> getAverageDurationPerPhysician() {
+//        return ResponseEntity.ok(appointmentService.getAverageAppointmentDurationPerPhysician());
+//    }
 
     @GetMapping("/monthly-report")
     @PreAuthorize("hasRole('ADMIN')")

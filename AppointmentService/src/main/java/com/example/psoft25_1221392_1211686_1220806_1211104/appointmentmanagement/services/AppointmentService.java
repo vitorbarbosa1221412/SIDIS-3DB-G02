@@ -33,7 +33,7 @@ public interface AppointmentService {
 
     Appointment scheduleAppointmentByPatient(Long userId, String physicianNumber, LocalDateTime dateTime, ConsultationType type);
 
-    List<AgeGroupStats> getAppointmentStatsByAgeGroup();
+//    List<AgeGroupStats> getAppointmentStatsByAgeGroup();
 
 
     List<Appointment> getAppointmentHistory(Long userId);

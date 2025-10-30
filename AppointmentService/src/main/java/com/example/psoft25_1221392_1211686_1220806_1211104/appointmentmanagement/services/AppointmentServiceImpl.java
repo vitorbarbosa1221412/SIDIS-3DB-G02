@@ -1,22 +1,16 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.services;
 
-import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.api.PhysicianAverageDurationDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.infrastructure.repositories.impl.SpringDataAppointmentRepository;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.AppointmentNumber;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.AppointmentStatus;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.ConsultationType;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.repositories.AppointmentRepository;
-import com.example.psoft25_1221392_1211686_1220806_1211104.exceptions.NotFoundException;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.AgeGroupStats;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
-import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.Physician;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -236,40 +230,40 @@ public class AppointmentServiceImpl implements AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    @Override
-    public List<AgeGroupStats> getAppointmentStatsByAgeGroup() {
-        List<Appointment> appointments = appointmentRepository.findAll();
-
-        LocalDate now = LocalDate.now();
-
-        Map<String, List<Appointment>> groupedByAge = appointments.stream()
-                .filter(appt -> appt.getStartTime() != null && appt.getEndTime() != null)
-                .collect(Collectors.groupingBy(appt -> {
-                    LocalDate birthDate = LocalDate.parse(appt.getPatient().getDateOfBirth());
-                    int age = Period.between(birthDate, now).getYears();
-
-                    if (age < 18) return "0-17";
-                    else if (age < 30) return "18-29";
-                    else if (age < 45) return "30-44";
-                    else if (age < 60) return "45-59";
-                    else return "60+";
-                }));
-
-        List<AgeGroupStats> stats = new ArrayList<>();
-        for (Map.Entry<String, List<Appointment>> entry : groupedByAge.entrySet()) {
-            String ageGroup = entry.getKey();
-            List<Appointment> groupAppointments = entry.getValue();
-
-            double averageDuration = groupAppointments.stream()
-                    .mapToLong(appt -> Duration.between(appt.getStartTime(), appt.getEndTime()).toMinutes())
-                    .average()
-                    .orElse(0.0);
-
-            stats.add(new AgeGroupStats(ageGroup, groupAppointments.size(), averageDuration));
-        }
-
-        return stats;
-    }
+//    @Override
+//    public List<AgeGroupStats> getAppointmentStatsByAgeGroup() {
+//        List<Appointment> appointments = appointmentRepository.findAll();
+//
+//        LocalDate now = LocalDate.now();
+//
+//        Map<String, List<Appointment>> groupedByAge = appointments.stream()
+//                .filter(appt -> appt.getStartTime() != null && appt.getEndTime() != null)
+//                .collect(Collectors.groupingBy(appt -> {
+//                    LocalDate birthDate = LocalDate.parse(appt.getPatient().getDateOfBirth());
+//                    int age = Period.between(birthDate, now).getYears();
+//
+//                    if (age < 18) return "0-17";
+//                    else if (age < 30) return "18-29";
+//                    else if (age < 45) return "30-44";
+//                    else if (age < 60) return "45-59";
+//                    else return "60+";
+//                }));
+//
+//        List<AgeGroupStats> stats = new ArrayList<>();
+//        for (Map.Entry<String, List<Appointment>> entry : groupedByAge.entrySet()) {
+//            String ageGroup = entry.getKey();
+//            List<Appointment> groupAppointments = entry.getValue();
+//
+//            double averageDuration = groupAppointments.stream()
+//                    .mapToLong(appt -> Duration.between(appt.getStartTime(), appt.getEndTime()).toMinutes())
+//                    .average()
+//                    .orElse(0.0);
+//
+//            stats.add(new AgeGroupStats(ageGroup, groupAppointments.size(), averageDuration));
+//        }
+//
+//        return stats;
+//    }
 
     @Override
     public List<Appointment> getAppointmentHistory(Long userId) {
@@ -292,7 +286,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         String patientUrl = "http://localhost:" + i + "/api/patients/id/" + userId + "/profile";
         Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
         String patientNumber = patient.getPatientNumber();
-        return appointmentRepository.findByPatient_PatientNumberOrderByDateTimeDesc(patientNumber);
+        return appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
     }
 
     @Override
@@ -301,19 +295,19 @@ public class AppointmentServiceImpl implements AppointmentService {
         return appointmentRepository.findUpcomingAppointments(now);
     }
 
-    @Override
-    public List<PhysicianAverageDurationDTO> getAverageAppointmentDurationPerPhysician() {
-        List<Object[]> results = springDataAppointmentRepository.findAverageAppointmentDurationPerPhysician();
-        List<PhysicianAverageDurationDTO> dtos = new ArrayList<>();
-
-        for (Object[] row : results) {
-            String name = (String) row[0];
-            Double avgSeconds = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
-            dtos.add(new PhysicianAverageDurationDTO(name, avgSeconds));
-        }
-
-        return dtos;
-    }
+//    @Override
+//    public List<PhysicianAverageDurationDTO> getAverageAppointmentDurationPerPhysician() {
+//        List<Object[]> results = springDataAppointmentRepository.findAverageAppointmentDurationPerPhysician();
+//        List<PhysicianAverageDurationDTO> dtos = new ArrayList<>();
+//
+//        for (Object[] row : results) {
+//            String name = (String) row[0];
+//            Double avgSeconds = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
+//            dtos.add(new PhysicianAverageDurationDTO(name, avgSeconds));
+//        }
+//
+//        return dtos;
+//    }
 
     @Data
     @AllArgsConstructor

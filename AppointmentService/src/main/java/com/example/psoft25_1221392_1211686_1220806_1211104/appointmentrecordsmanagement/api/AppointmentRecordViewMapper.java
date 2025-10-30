@@ -4,7 +4,6 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsman
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
-
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -15,17 +14,12 @@ public interface AppointmentRecordViewMapper {
             @Mapping(source = "treatmentRecommendation", target = "treatmentRecommendation"),
             @Mapping(source = "prescription", target = "prescription"),
             @Mapping(source = "recordNumber", target = "recordNumber"),
-
             @Mapping(source = "appointment.appointmentNumber.value", target = "appointmentNumber"),
             @Mapping(source = "appointment.dateTime", target = "appointmentDateTime"),
             @Mapping(source = "appointment.consultationType", target = "consultationType"),
             @Mapping(source = "appointment.status", target = "status"),
-
-            @Mapping(source = "appointment.patient.patientNumber", target = "patientNumber"),
-            @Mapping(source = "appointment.patient.emailAddress", target = "patientEmail"),
-
-            @Mapping(source = "appointment.physician.name", target = "physicianName"),
-            @Mapping(source = "appointment.physician.physicianNumber", target = "physicianNumber")
+            @Mapping(source = "appointment.patientId", target = "patientId"),
+            @Mapping(source = "appointment.physicianId", target = "physicianId"),
     })
     AppointmentRecordView toAppointmentRecordView(AppointmentRecord record);
 

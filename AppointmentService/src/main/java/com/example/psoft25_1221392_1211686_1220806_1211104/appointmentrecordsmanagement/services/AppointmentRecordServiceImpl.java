@@ -129,15 +129,13 @@ public class AppointmentRecordServiceImpl implements AppointmentRecordService {
         List<ElectronicPrescriptionDTO> electronicPrescription = new ArrayList<>();
 
         for (Object[] row : prescriptionData) {
-            String patientName = (String) row[0];
-            String physicianName = (String) row[1];
-            String physicianPhoneNumber = (String) row[2];
-            String prescription = (String) row[3];
+            String patientId = (String) row[0];
+            String physicianId = (String) row[1];
+            String prescription = (String) row[2];
 
             electronicPrescription.add(new ElectronicPrescriptionDTO(
-                    patientName,
-                    physicianName,
-                    physicianPhoneNumber,
+                    patientId,
+                    physicianId,
                     prescription
             ));
         }

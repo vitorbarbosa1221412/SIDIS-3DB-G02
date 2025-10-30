@@ -1,7 +1,5 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model;
 
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
-import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.Physician;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,11 +35,9 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     private AppointmentStatus status;
 
-    @ManyToOne(optional = false)
-    private Patient patient;
+    private String patientId;
 
-    @ManyToOne(optional = false)
-    private Physician physician;
+    private String physicianId;
 
     // @OneToOne(mappedBy = "appointment", cascade = CascadeType.ALL)
    // private AppointmentRecord appointmentRecord;
@@ -52,13 +48,13 @@ public class Appointment {
 
 
     public Appointment(LocalDateTime dateTime, ConsultationType consultationType, AppointmentStatus status,
-                       Patient patient, Physician physician) {
+                       String patientId, String physicianId) {
         this();
         this.dateTime = dateTime;
         this.consultationType = consultationType;
         this.status = status;
-        this.patient = patient;
-        this.physician = physician;
+        this.patientId = patientId;
+        this.physicianId = physicianId;
 
     }
 }

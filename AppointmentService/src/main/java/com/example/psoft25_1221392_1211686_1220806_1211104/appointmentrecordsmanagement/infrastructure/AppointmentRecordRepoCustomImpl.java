@@ -27,9 +27,9 @@ class AppointmentRecordRepoCustomImpl implements AppointmentRecordRepoCustom {
 
         // Join: AppointmentRecord -> Appointment -> Patient
         Join<Object, Object> appointmentJoin = root.join("appointment");
-        Join<Object, Object> patientJoin = appointmentJoin.join("patient");
+        Join<Object, Object> patientJoin = appointmentJoin.join("patientId");
 
-        cq.select(root).where(cb.equal(patientJoin.get("patientNumber"), patientNumber));
+        cq.select(root).where(cb.equal(patientJoin.get("patientId"), patientNumber));
 
         TypedQuery<AppointmentRecord> query = em.createQuery(cq);
         query.setFirstResult((page.getNumber() - 1) * page.getLimit());

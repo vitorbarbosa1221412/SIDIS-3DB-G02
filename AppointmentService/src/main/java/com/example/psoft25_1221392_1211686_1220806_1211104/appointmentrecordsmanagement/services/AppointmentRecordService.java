@@ -3,9 +3,6 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsma
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.api.AppointmentRecordView;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.api.ElectronicPrescriptionDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.model.AppointmentRecord;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
-import org.springframework.http.ResponseEntity;
-
 import java.util.List;
 
 public interface AppointmentRecordService {

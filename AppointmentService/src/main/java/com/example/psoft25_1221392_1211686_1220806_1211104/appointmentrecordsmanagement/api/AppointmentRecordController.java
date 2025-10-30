@@ -4,7 +4,6 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsman
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.services.AppointmentRecordService;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.services.CreateAppointmentRecordRequest;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.services.UpdateAppointmentRecordRequest;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.services.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

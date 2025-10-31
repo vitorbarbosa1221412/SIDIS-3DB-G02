@@ -117,4 +117,9 @@ public class UserService implements UserDetailsService {
 		}
 		return userRepo.searchUsers(page, query);
 	}
+
+	@Transactional(readOnly = true)
+	public Optional<User> findByUsername(final String username) {
+		return userRepo.findByUsername(username);
+	}
 }

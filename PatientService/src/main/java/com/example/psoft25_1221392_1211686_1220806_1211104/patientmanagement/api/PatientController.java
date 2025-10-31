@@ -4,17 +4,22 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.cli
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.PhysicianDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.services.*;
+import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.services.UserService;
+import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.Role;
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.api.UserInternalDTO;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority; // Usar GrantedAuthority
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -34,6 +40,35 @@ public class PatientController {
     private final PatientService patientService;
     private final PatientViewMapper mapper;
     private final PatientIntegrationService integrationService;
+
+    // NOVO: SERVIÇO DE UTILIZADORES INJETADO
+    private final UserService userService;
+
+    // =============================================================
+    // NOVO ENDPOINT INTERNO PARA O AUTHSERVICE
+    // Endpoint protegido por hasRole("INTERNAL_SERVICE") no SecurityConfig.
+    // =============================================================
+    @GetMapping("/internal/users/{username}")
+    public ResponseEntity<UserInternalDTO> getUserDetailsForAuth(@PathVariable String username) {
+
+        return userService.findByUsername(username)
+                .map(user -> {
+                    // O objeto 'user' implementa UserDetails; usamos getAuthorities().
+                    Set<String> roles = user.getAuthorities().stream()
+                            // Role implementa GrantedAuthority, e getAuthority() devolve a String ("PATIENT", "ADMIN", etc.)
+                            .map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.toSet());
+
+                    UserInternalDTO dto = new UserInternalDTO(
+                            user.getId().toString(),
+                            user.getUsername(),
+                            user.getPassword(), // Retorna o HASH da password!
+                            roles
+                    );
+                    return ResponseEntity.ok(dto);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -60,6 +95,8 @@ public class PatientController {
 
         return new ResponseEntity<>(mapper.toPatientView(patient), HttpStatus.CREATED);
     }
+
+    // ... (Restante código do Controller mantido)
 
     @GetMapping("/debug/ids")
     public ResponseEntity<List<Long>> getAllPatientIds() {
@@ -139,9 +176,6 @@ public class PatientController {
         patientService.updatePersonalData(email, request);
         return ResponseEntity.noContent().build();
     }
-
-
-
 
 
 }

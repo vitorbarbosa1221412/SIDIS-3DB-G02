@@ -1,0 +1,133 @@
+@startuml
+' US-07 Microservices: Schedule Appointment (Flow starts at Appointment Service)
+
+title US-07: As a Patient, I want to schedule an appointment (Microservices, starts at Appointment Service)
+
+actor Patient
+participant APIClient as "API Client\n(Web/Mobile)"
+participant AppointmentService as "Appointment Service\n"
+participant AppointmentController as "Appointment Controller"
+participant AppointmentDomain as "Appointment Service\nLayer"
+participant AppointmentRepository as "Appointment Repository"
+participant AppointmentDB as "Appointment Database"
+participant PhysicianService as "Physician Service\n"
+participant PhysicianController as "Physician Controller"
+participant PhysicianDomain as "Physician Service\nLayer"
+participant PhysicianRepository as "Physician Repository"
+participant PhysicianDB as "Physician Database"
+participant PatientService as "Patient Servic"
+participant PatientController as "Patient Controller"
+participant PatientRepository as "Patient Repository"
+participant PatientDB as "Patient Database"
+
+
+
+Patient -> APIClient : Request to schedule appointment
+APIClient -> AppointmentService : POST /api/appointments/scheduleAppointment\n(ScheduleAppointmentRequest)
+activate AppointmentService
+
+AppointmentService -> AppointmentController : scheduleAppointment(request)
+activate AppointmentController
+
+note right of AppointmentController
+  Validate request and orchestrate:
+  1) Verify patient exists
+  2) Check availability
+  3) Validate physician
+  4) Create appointment
+end note
+
+' 1) Verify patient exists in Patient Service
+AppointmentController -> PatientService : HTTP GET /api/patients/number/{patientNumber}
+activate PatientService
+PatientService -> PatientController : getPatientByNumber(number)
+activate PatientController
+PatientController -> PatientRepository : findByPatientNumber(number)
+activate PatientRepository
+PatientRepository -> PatientDB : SELECT * FROM patients WHERE patient_number = ?
+activate PatientDB
+PatientDB --> PatientRepository : Patient?
+PatientRepository --> PatientController : Optional<Patient>
+deactivate PatientRepository
+deactivate PatientDB
+PatientController --> PatientService : 200 OK or 404
+PatientService --> AppointmentController : Patient exists?
+deactivate PatientController
+deactivate PatientService
+
+alt Patient not found
+  AppointmentController --> AppointmentService : HTTP 404 Not Found
+  AppointmentService --> APIClient : 404 Not Found (Invalid patient)
+  APIClient --> Patient : Show error
+  deactivate AppointmentController
+  deactivate AppointmentService
+  return
+end
+
+' 2) Check availability (service computes slots; repo returns appointments for the day)
+AppointmentController -> AppointmentDomain : getAvailableSlots(physicianNumber, date)
+activate AppointmentDomain
+
+AppointmentDomain -> AppointmentRepository : findAppointmentsByPhysicianNumberAndDate(physicianNumber, startOfDay, endOfDay)
+activate AppointmentRepository
+AppointmentRepository -> AppointmentDB : SELECT appointments WHERE physician_number = ? AND date BETWEEN startOfDay AND endOfDay
+AppointmentDB --> AppointmentRepository : List<Appointment>
+AppointmentRepository --> AppointmentDomain : List<Appointment>
+deactivate AppointmentRepository
+AppointmentDomain --> AppointmentController : List<LocalTime> availableSlots
+deactivate AppointmentDomain
+
+alt Requested time not available
+  AppointmentController --> AppointmentService : HTTP 409 Conflict
+  AppointmentService --> APIClient : 409 Conflict (Slot not available)
+  APIClient --> Patient : Show slot not available
+  deactivate AppointmentController
+  deactivate AppointmentService
+  return
+end
+
+' 3) Validate physician via Physician Service
+AppointmentController -> PhysicianService : HTTP GET /api/physicians/number/{physicianNumber}
+activate PhysicianService
+PhysicianService -> PhysicianController : getPhysicianByNumber(physicianNumber)
+activate PhysicianController
+PhysicianController -> PhysicianRepository : findByPhysicianNumber(physicianNumber)
+activate PhysicianRepository
+PhysicianRepository -> PhysicianDB : SELECT * FROM physicians WHERE physician_number = ?
+activate PhysicianDB
+PhysicianDB --> PhysicianRepository : Physician?
+PhysicianRepository --> PhysicianController : Optional<Physician>
+deactivate PhysicianRepository
+deactivate PhysicianDB
+PhysicianController --> PhysicianService : 200 OK or 404
+PhysicianService --> AppointmentController : Physician exists?
+deactivate PhysicianController
+deactivate PhysicianService
+
+alt Physician not found
+  AppointmentController --> AppointmentService : HTTP 404 Not Found
+  AppointmentService --> APIClient : 404 Not Found (Invalid physician)
+  APIClient --> Patient : Show error
+  deactivate AppointmentController
+  deactivate AppointmentService
+  return
+end
+
+' 4) Create appointment
+AppointmentController -> AppointmentDomain : createAppointment(patientNumber, physicianNumber, dateTime, type)
+activate AppointmentDomain
+AppointmentDomain -> AppointmentRepository : save(appointment)
+AppointmentRepository -> AppointmentDB : INSERT INTO appointments (...)
+AppointmentDB --> AppointmentRepository : savedAppointment
+AppointmentRepository --> AppointmentDomain : savedAppointment
+AppointmentDomain --> AppointmentController : AppointmentDTO
+
+AppointmentController --> AppointmentService : HTTP 201 Created + AppointmentDTO
+AppointmentService --> APIClient : 201 Created + AppointmentDTO
+APIClient --> Patient : Show appointment details
+
+deactivate AppointmentDomain
+deactivate AppointmentController
+deactivate AppointmentService
+
+@enduml

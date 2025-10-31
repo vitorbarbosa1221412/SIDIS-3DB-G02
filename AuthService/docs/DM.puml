@@ -1,0 +1,72 @@
+@startuml ClinicDomainModel
+
+hide methods
+
+package "Patient Service"{
+    entity Patient {
+        id
+        name
+        username
+        phoneNumber
+        dateOfBirth
+        patientNumber
+        enabled
+        healthConcerns
+    }
+}
+
+package "Physician Service"{
+    entity Physician {
+        name
+        address
+        phoneNumber
+        emailAddress
+        department
+        specialty
+        workingHours
+    }
+    entity Department {
+    }
+
+    entity Specialization {
+    }
+}
+
+package "Appointment Service"{
+    entity Appointment {
+        diagnosis
+        treatmentRecommendation
+        prescription
+        recordNumber
+        appointmentNumber
+        appointmentDateTime
+        consultationType
+        status
+        patientNumber
+        patientEmail
+        physicianName
+        physicianNumber
+    }
+
+    entity AppointmentRecord {
+    }
+
+    entity AppointmentType {
+    }
+}
+
+entity User {
+}
+
+' Relacionamentos
+User "1" --> "*"  Patient : "User can be \n pacient"
+User "1" --> "*"  Physician : "User can be \n Physician"
+Patient "1" --> "*" Appointment : Pacient places an Appointment
+Physician "1" --> "*" Appointment : Physician attends\n Appointments
+Appointment "1" --> "1" AppointmentRecord : "Appointment generates\n AppointmentRecord"
+Physician "*" --> "             1" Department : "Physicians has  Department"
+Physician "*" --> "             1" Specialization : "Physicians has\n Specialization"
+Appointment "1" --> "1" AppointmentType : "Appointment generates\n AppointmentType"
+
+
+@enduml

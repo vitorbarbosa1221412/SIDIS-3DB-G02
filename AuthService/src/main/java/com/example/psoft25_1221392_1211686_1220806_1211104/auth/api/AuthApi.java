@@ -20,59 +20,58 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.api.UserView;
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.api.UserViewMapper;
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.services.CreateUserRequest;
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.services.UserService;
-
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails; // Import necessário
 
-/**
- * Based on https://github.com/Yoh0xFF/java-spring-security-example
- *
- */
 @Tag(name = "Authentication")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(path = "api/public")
+@RequestMapping(path = "api/auth") // ALTERADO O PATH
 public class AuthApi {
 
     private final AuthenticationManager authenticationManager;
-
     private final JwtEncoder jwtEncoder;
 
-    private final UserViewMapper userViewMapper;
-
-    private final UserService userService;
+    // REMOVIDOS:
+    // private final UserViewMapper userViewMapper;
+    // private final UserService userService;
 
     @PostMapping("login")
-    public ResponseEntity<UserView> login(@RequestBody @Valid final AuthRequest request) {
+    // O retorno é alterado para String (o JWT), pois UserView é desconhecido
+    public ResponseEntity<String> login(@RequestBody @Valid final AuthRequest request) {
         try {
             final Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-            // if the authentication is successful, Spring will store the authenticated user
-            // in its "principal"
-            final User user = (User) authentication.getPrincipal();
+
+            final UserDetails user = (UserDetails) authentication.getPrincipal();
 
             final Instant now = Instant.now();
-            final long expiry = 36000L; // 1 hours is usually too long for a token to be valid. adjust for production
+            final long expiry = 3600L; // 1 hora ( 3600 segundos)
 
             final String scope = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
                     .collect(joining(" "));
 
-            final JwtClaimsSet claims = JwtClaimsSet.builder().issuer("example.io").issuedAt(now)
-                    .expiresAt(now.plusSeconds(expiry)).subject(format("%s,%s", user.getId(), user.getUsername()))
+
+            final String userIdPlaceholder = user.getUsername() + "_id";
+
+            final JwtClaimsSet claims = JwtClaimsSet.builder()
+                    .issuer("https://auth-service:8443") // ALTERADO para o domínio do AuthService
+                    .issuedAt(now)
+                    .expiresAt(now.plusSeconds(expiry))
+                    .subject(format("%s", user.getUsername())) // Usamos apenas o username/subject
                     .claim("roles", scope)
-                    .claim("userId", user.getId()).build();
+                    .claim("userId", userIdPlaceholder) // Placeholder. Deve ser o ID real
+                    .build();
 
             final String token = this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
-            return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, token).body(userViewMapper.toUserView(user));
+            // Retornamos apenas o token no corpo e no cabeçalho
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .body(token);
         } catch (final BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -84,10 +83,13 @@ public class AuthApi {
      * @param request
      * @return
      */
+    //
+    //
+    /*
     @PostMapping("register")
     public UserView register(@RequestBody @Valid final CreateUserRequest request) {
         final var user = userService.create(request);
         return userViewMapper.toUserView(user);
     }
-
-}
+    */
+};

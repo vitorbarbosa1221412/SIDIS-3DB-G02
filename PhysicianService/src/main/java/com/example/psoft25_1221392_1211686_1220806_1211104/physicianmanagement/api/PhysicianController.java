@@ -3,9 +3,21 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.client.PatientClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.Physician;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.services.*;
+
+// =========================================================================
+// IMPORTS DO DOMÍNIO DE UTILIZADORES
+// =========================================================================
+import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.services.UserService;
+import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.Role;
+import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
+import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.api.UserInternalDTO; // Importa o DTO que o AuthService espera
+import org.springframework.security.core.GrantedAuthority;
+
+
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.context.support.BeanDefinitionDsl; // REMOVIDO
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +25,45 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/physicians")
 public class PhysicianController {
     @Autowired
     private PhysicianService physicianService;
+    @Autowired
     private PatientClient patientClient;
+
+    // NOVO: SERVIÇO DE UTILIZADORES INJETADO
+    @Autowired
+    private UserService userService;
+
+    // =============================================================
+    // ENDPOINT INTERNO CORRIGIDO (FORNECE CREDENCIAIS AO AUTHSERVICE)
+    // =============================================================
+    @GetMapping("/internal/users/{username}")
+    public ResponseEntity<UserInternalDTO> getUserDetailsForAuth(@PathVariable String username) {
+
+        return userService.findByUsername(username)
+                .map(user -> {
+                    // CORREÇÃO: User implementa UserDetails, por isso usamos getAuthorities().
+                    // O método getAuthority() na classe Role devolve a String da função.
+                    Set<String> roles = user.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.toSet());
+
+                    UserInternalDTO dto = new UserInternalDTO(
+                            user.getId().toString(),
+                            user.getUsername(),
+                            user.getPassword(), // HASH da password!
+                            roles
+                    );
+                    return ResponseEntity.ok(dto);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 
     @Operation(summary = "Create an Physician")
     @PostMapping(consumes = "multipart/form-data")
@@ -66,7 +110,7 @@ public class PhysicianController {
         } else if (specialty != null) {
             return physicianService.searchPhysiciansBySpecialty(p, specialty);
 
-    } else {
+        } else {
             return new ResponseEntity<>(physicianService.getAllPhysicians(p), HttpStatus.OK);
         }
     }

@@ -3,6 +3,7 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.se
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.AppointmentClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.PhysicianClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentDTO;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentRecordDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.PhysicianDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -108,5 +111,21 @@ public class PatientIntegrationService {
 		return physicianClient.searchPhysiciansBySpecialty(specialty)
 				.map(arr -> Arrays.asList(arr))
 				.orElseGet(Collections::emptyList);
+	}
+
+	public List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date) {
+		return appointmentClient.getAvailableSlots(physicianNumber, date);
+	}
+
+	public Optional<AppointmentDTO> scheduleAppointment(Object scheduleRequest) {
+		return appointmentClient.scheduleAppointment(scheduleRequest);
+	}
+
+	public List<AppointmentDTO> searchAppointmentsByPhysician(String physicianName) {
+		return appointmentClient.searchAppointmentsByPhysician(physicianName);
+	}
+
+	public List<AppointmentRecordDTO> getAppointmentRecords(String patientNumber) {
+		return appointmentClient.getAppointmentRecords(patientNumber);
 	}
 }

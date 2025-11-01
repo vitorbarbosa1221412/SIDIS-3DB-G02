@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // IMPORT NECESSÁRIO
+import org.springframework.security.crypto.password.PasswordEncoder; // IMPORT NECESSÁRIO
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -49,6 +51,11 @@ public class SecurityConfig {
     private String swaggerPath;
 
 
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -84,7 +91,7 @@ public class SecurityConfig {
 
                 // NOVO: PROTEÇÃO DO ENDPOINT INTERNO (Para o AuthService ir buscar credenciais)
                 .requestMatchers("/api/internal/**").hasRole("INTERNAL_SERVICE")
-                // O PatientService deve gerir os seus próprios IDs, não o Physician
+                // O PatientService deve gerir os seus próprios IDs
                 .requestMatchers("/api/patients/id/**").permitAll()
 
 
@@ -95,18 +102,37 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,"/api/patient/{year}/{id}/profile").hasRole(Role.PHYSICIAN)
                 .requestMatchers(HttpMethod.PUT,"/api/patients/updatePatient").hasRole(Role.PATIENT)
 
-                // Regras que não pertencem ao PatientService (PUT/PATCH de médicos/consultas) devem ser movidas:
-                /*
+                // As regras restantes devem ser movidas para os respetivos microsserviços
+                // Mantemos o resto das regras originais, mas corrigidas:
+
                 .requestMatchers(HttpMethod.PUT,"/api/patients/{patientNumber}").hasRole(Role.PHYSICIAN)
                 .requestMatchers(HttpMethod.PATCH,"/api/patients/{patientNumber}").hasRole(Role.PHYSICIAN)
 
-                //Appointments
+                //Appointments (Isto deve ser movido para o AppointmentsService, mas mantido por agora)
                 .requestMatchers("/api/appointment").hasRole(Role.PHYSICIAN)
-                ... etc
-                */
+                .requestMatchers(HttpMethod.PATCH, "/api/appointment/{appointmentNumber}/**").hasRole(Role.PATIENT)
+                .requestMatchers(HttpMethod.GET, "/api/appointment/{appointmentNumber}/**").hasAnyRole(Role.PHYSICIAN, Role.PATIENT)
+                .requestMatchers(HttpMethod.POST, "/api/appointment/patient/scheduleAppointment").hasAnyRole(Role.PATIENT, Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/api/appointment/average-duration").hasRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/api/appointment/upcoming").hasRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/api/appointment/monthly-report").hasRole(Role.ADMIN)
 
-                // O PatientService deve focar-se apenas em endpoints relacionados com o domínio 'Patient'
-                // Mantemos o resto das regras originais por agora, mas com as correções de Role
+                //Physician (Isto deve ser movido para o PhysicianService, mas mantido por agora)
+                .requestMatchers(HttpMethod.POST, "/api/physicians").hasAnyRole(Role.ADMIN, Role.PATIENT)
+                .requestMatchers(HttpMethod.POST, "/{physicianNumber}").hasRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/top5physicians").hasRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/availableSlots").hasRole(Role.PATIENT)
+                .requestMatchers(HttpMethod.GET, "/{id}").hasRole(Role.ADMIN)
+
+                //AppointmentRecords (Isto deve ser movido para o AppointmentsService, mas mantido por agora)
+                .requestMatchers(HttpMethod.POST, "/api/appointmentRecords").hasRole(Role.PHYSICIAN)
+                .requestMatchers(HttpMethod.GET, "/record/{recordNumber}").hasAnyRole(Role.ADMIN, Role.PATIENT)
+                .requestMatchers(HttpMethod.GET, "/patient/{patientNumber}").hasAnyRole(Role.PHYSICIAN, Role.PATIENT)
+                .requestMatchers(HttpMethod.PUT, "/{recordNumber}").hasAnyRole(Role.PHYSICIAN)
+                .requestMatchers(HttpMethod.GET, "/search/{patientNumber}/{recordNumber}").hasAnyRole(Role.PHYSICIAN)
+                .requestMatchers(HttpMethod.GET, "/getAll").hasRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/electronic-prescription/{recordNumber}").hasRole(Role.PHYSICIAN)
+
 
                 .anyRequest().authenticated()
                 .and()
@@ -150,5 +176,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
-
 }

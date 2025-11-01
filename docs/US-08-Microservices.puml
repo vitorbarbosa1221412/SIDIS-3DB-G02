@@ -1,0 +1,88 @@
+@startuml
+' US-08 Microservices: View my appointments (starts at Appointment Service)
+
+title US-08: As a Patient, I want to view my appointments (Microservices)
+
+actor Patient
+participant APIClient as "API Client\n(Web/Mobile)"
+participant AppointmentService as "Appointment Service"
+participant AppointmentController as "Appointment Controller"
+participant AppointmentDomain as "Appointment Service\nLayer"
+participant AppointmentRepository as "Appointment Repository"
+participant AppointmentDB as "Appointment Database"
+participant PatientService as "Patient Service"
+participant PatientController as "Patient Controller"
+participant PatientRepository as "Patient Repository"
+participant PatientDB as "Patient Database"
+
+' Request entry
+Patient -> APIClient : Request to view my appointments
+APIClient -> AppointmentService : GET /api/appointments/my-appointments
+activate AppointmentService
+
+AppointmentService -> AppointmentController : getMyAppointments(principal)
+activate AppointmentController
+
+note right of AppointmentController
+  Requires role PATIENT.
+  Extract userId from JWT claim.
+end note
+
+AppointmentController -> AppointmentDomain : getAppointmentHistory(userId)
+activate AppointmentDomain
+
+' Resolve patientNumber from Patient Service using userId
+AppointmentDomain -> PatientService : HTTP GET /api/patients/id/{userId}/profile
+activate PatientService
+PatientService -> PatientController : getPatientById(id)
+activate PatientController
+PatientController -> PatientRepository : findById(id)
+activate PatientRepository
+PatientRepository -> PatientDB : SELECT * FROM patients WHERE id = ?
+activate PatientDB
+PatientDB --> PatientRepository : Patient?
+PatientRepository --> PatientController : Optional<Patient>
+deactivate PatientRepository
+Deactivate PatientDB
+
+alt Patient not found
+  PatientController --> PatientService : 404 Not Found
+  PatientService --> AppointmentDomain : 404
+  AppointmentDomain --> AppointmentController : error
+  AppointmentController --> AppointmentService : HTTP 404 Not Found
+  AppointmentService --> APIClient : 404 Not Found
+  APIClient --> Patient : Show error
+  deactivate PatientController
+  deactivate PatientService
+  deactivate AppointmentDomain
+  deactivate AppointmentController
+  deactivate AppointmentService
+  return
+else Patient found
+  PatientController --> PatientService : 200 OK + Patient
+  PatientService --> AppointmentDomain : Patient(patientNumber)
+  deactivate PatientController
+  deactivate PatientService
+end
+
+' Fetch appointments by patientNumber ordered desc by datetime
+AppointmentDomain -> AppointmentRepository : findByPatient_PatientNumberOrderByDateTimeDesc(patientNumber)
+activate AppointmentRepository
+AppointmentRepository -> AppointmentDB : SELECT * FROM appointments\nWHERE patient_number = ?\nORDER BY date_time DESC
+AppointmentDB --> AppointmentRepository : List<Appointment>
+AppointmentRepository --> AppointmentDomain : List<Appointment>
+deactivate AppointmentRepository
+
+' Map to views at controller
+AppointmentDomain --> AppointmentController : List<Appointment>
+deactivate AppointmentDomain
+
+AppointmentController -> AppointmentController : appointmentMapper.toView(List<Appointment>)
+AppointmentController --> AppointmentService : HTTP 200 OK + List<AppointmentView>
+AppointmentService --> APIClient : 200 OK + List<AppointmentView>
+APIClient --> Patient : Show appointments
+
+deactivate AppointmentController
+Deactivate AppointmentService
+
+@enduml

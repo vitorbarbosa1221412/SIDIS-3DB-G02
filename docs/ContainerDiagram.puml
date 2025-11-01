@@ -1,0 +1,38 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_WITH_LEGEND()
+
+title System Context diagram for the Healthcare Administration Platform (HAP).
+
+Person(patient, "Patient", "A patient of the platform, with personal information and appointments.")
+Person(physician, "Physician", "As appointments with the patients.")
+Person(admin, "Admin", "Manages the system")
+
+rectangle "Hospital Administration System (HAP)" as HAP #line.dashed {
+    Container(frontend, "Front-End App", "Technology", "Application that receives the HTTPS messages, like POSTMAN")
+    Container(Gateway, "API Gateway", "nginx", "Handles API requests and routing")
+
+    Container(PatientService, "Patient Service", "Java Spring Boot", "The Service for the Patients")
+    Container(PhysicianService, "Physician Service", "Java Spring Boot", "The Service for the Physicians")
+    Container(AppointmentService, "Appointment Service", "Java Spring Boot", "The Service for the Appointments")
+
+    Container(PatientDatabase, "Patient Database", "PostgreSQL", "The Database for the Patients")
+    Container(PhysicianDatabase, "Physician Database", "PostgreSQL", "The Database for the Physicians")
+    Container(AppointmentDatabase, "Appointment Database", "PostgreSQL", "The Database for the Appointments")
+
+    Rel(patient, frontend, "Uses")
+    Rel(physician, frontend, "Uses")
+    Rel(admin, frontend, "Manages")
+    Rel(frontend, Gateway, "Uses")
+    Rel_L(Gateway, PatientService, "Routes Patient Requests to")
+    Rel_R(Gateway, PhysicianService, "Routes Physician Requests to")
+    Rel_D(Gateway, AppointmentService, "Routes Appointment Requests to")
+    BiRel_U(AppointmentService, PatientService, "Requests Patient Information")
+    BiRel_U(AppointmentService, PhysicianService, "Requests Physician Information")
+    BiRel_D(PatientService, PatientDatabase, "Read/Writes Information")
+    BiRel_D(PhysicianService, PhysicianDatabase, "Read/Writes Information")
+    BiRel_D(AppointmentService, AppointmentDatabase, "Read/Writes Information")
+
+}
+
+@enduml

@@ -1,6 +1,5 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.services;
 
-import com.example.psoft25_1221392_1211686_1220806_1211104.exceptions.NotFoundException;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.client.PatientClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.Physician;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.PhysicianNumber;
@@ -18,7 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.util.List;
 
 @Service
@@ -88,6 +86,16 @@ public class PhysicianServiceImpl implements PhysicianService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Physician not found");
         } else {
             return new ResponseEntity<>(physician, HttpStatus.OK);
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> getPhysicianWorkingHoursById(Long physicianId) {
+        Physician physician = physicianRepo.findById(physicianId).orElse(null);
+        if (physician == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Physician not found");
+        } else {
+            return new ResponseEntity<>(physician.getWorkingHours(), HttpStatus.OK);
         }
     }
 

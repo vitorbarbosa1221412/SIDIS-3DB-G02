@@ -3,14 +3,11 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagemen
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.api.PhysicianAverageDurationDTO;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.ConsultationType;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.AgeGroupStats;
 import org.springframework.http.ResponseEntity;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-
 
 public interface AppointmentService {
 
@@ -31,20 +28,18 @@ public interface AppointmentService {
 
     List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date);
 
-    Appointment scheduleAppointmentByPatient(Long userId, String physicianNumber, LocalDateTime dateTime, ConsultationType type);
+    Appointment scheduleAppointmentByPatient(String patientId, String physicianId, LocalDateTime dateTime, ConsultationType type);
 
 //    List<AgeGroupStats> getAppointmentStatsByAgeGroup();
 
 
-    List<Appointment> getAppointmentHistory(Long userId);
+    List<Appointment> getAppointmentHistory(String userId);
 
     //Lista as próximas consultas
     List<Appointment> getUpcomingAppointments();
 
-    List<PhysicianAverageDurationDTO> getAverageAppointmentDurationPerPhysician();
-
+//    List<PhysicianAverageDurationDTO> getAverageAppointmentDurationPerPhysician();
 
     List<AppointmentServiceImpl.MonthlyAppointmentReport> getMonthlyReport();
-
 
 }

@@ -1,0 +1,17 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context diagram for the Healthcare Administration Platform (HAP).
+
+Person(patient, "Patient", "A patient of the platform, with personal information and appointments")
+Person(physician, "Physician", "As appointments with the patients")
+Person(admin, "Admin", "Manages the system")
+
+System(HAP, "Hospital Administration System (HAP)", "App that manages the physicians, patients and their respective appointments")
+
+Rel(patient, HAP, "Manages their Appointments and Views the Details")
+Rel(physician, HAP, "Manages their Appointments")
+Rel(admin, HAP, "Manages")
+@enduml

@@ -41,7 +41,7 @@ public interface SpringDataAppointmentRecordRepository extends AppointmentRecord
     Optional<AppointmentRecord> findByRecordNumber(Long recordNumber);
 
     @Cacheable
-    List<AppointmentRecord> findByAppointment_Patient_PatientNumber(String patientNumber);
+    List<AppointmentRecord> findByAppointment_PatientId(String patientNumber);
     List<AppointmentRecord> getAppointmentRecordByRecordNumber(Long recordNumber);
 
 //    @Query("SELECT ar FROM AppointmentRecord ar WHERE ar.appointment.patientId = :patient")

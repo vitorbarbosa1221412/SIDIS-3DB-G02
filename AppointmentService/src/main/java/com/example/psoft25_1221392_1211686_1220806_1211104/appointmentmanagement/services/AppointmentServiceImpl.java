@@ -14,9 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.*;
@@ -111,15 +108,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date) {
-        String physicianUrl = serverUrl + physicianPort + url_physician + "number/" + physicianNumber;
-        Physician physician = restTemplate.getForObject(physicianUrl, Physician.class);
+        String physicianUrl = "http://localhost:5000/api/physician/workinghours/" + physicianNumber;
+        String physicianWorkingHours = restTemplate.getForObject(physicianUrl, String.class);
 
         // 1. Obter o médico
         // Physician physician = physicianRepository.findByPhysicianNumber(physicianNumber)
         //        .orElseThrow(() -> new NotFoundException("Physician with number " + physicianNumber + " not found"));
 
         // 2. Interpretar workingHours no formato "HH:mm-HH:mm"
-        String[] parts = physician.getWorkingHours().split("-");
+        String[] parts = physicianWorkingHours.split("-");
         if (parts.length != 2) {
             throw new IllegalArgumentException("Invalid workingHours format. Expected format: HH:mm-HH:mm");
         }
@@ -151,69 +148,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .collect(Collectors.toList());
     }
     @Override
-    public Appointment scheduleAppointmentByPatient(Long userId, String physicianNumber, LocalDateTime dateTime, ConsultationType type) {
-        int i;
-        for(i = patientPort; i <= patientPort + 999; i++) {
-            try {
-                ResponseEntity<Patient> response = restTemplate.getForEntity(serverUrl + i + url_patient + "id/" +userId + "/profile", Patient.class);
-                if (response.getStatusCode() != HttpStatus.OK) {
-                    throw new ResponseStatusException(response.getStatusCode(),
-                            "Service at port " + i + " responded with status: " + response.getStatusCode());
-
-                }
-
-
-
-            } catch (HttpClientErrorException | HttpServerErrorException ex) {
-                // For 4xx or 5xx HTTP errors that cause exceptions to be thrown
-                throw new ResponseStatusException(ex.getStatusCode(),
-                        "Service at port " + i + " returned error: " + ex.getStatusCode());
-            } catch (ResourceAccessException ex) {
-                // Service unreachable at this port — optionally continue trying next port
-                // Or throw if you want to fail fast
-            }
-        }
-
-
-
-        String patientUrl = serverUrl + i + url_patient + "id/" +userId + "/profile";
-        Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
-
-        // assert patient != null;
-        String patientNumber = patient.getPatientNumber();
-
-        patientUrl = serverUrl + i + url_patient + "/number/" + patientNumber;
-        patient = restTemplate.getForObject(patientUrl, Patient.class);
-
-        for(i = physicianPort; i <= physicianPort + 999; i++) {
-            try {
-                ResponseEntity<Patient> response = restTemplate.getForEntity(serverUrl + i + url_physician, Patient.class);
-                if (response.getStatusCode() != HttpStatus.OK) {
-                    throw new ResponseStatusException(response.getStatusCode(),
-                            "Service at port " + i + " responded with status: " + response.getStatusCode());
-
-                }
-
-
-
-            } catch (HttpClientErrorException | HttpServerErrorException ex) {
-                // For 4xx or 5xx HTTP errors that cause exceptions to be thrown
-                throw new ResponseStatusException(ex.getStatusCode(),
-                        "Service at port " + i + " returned error: " + ex.getStatusCode());
-            } catch (ResourceAccessException ex) {
-                // Service unreachable at this port — optionally continue trying next port
-                // Or throw if you want to fail fast
-            }
-        }
-
-        String physicianUrl = serverUrl + i + url_physician + "/number/" + physicianNumber;
-        Physician physician = restTemplate.getForObject(physicianUrl, Physician.class);
-
+    public Appointment scheduleAppointmentByPatient(String patientId, String physicianId, LocalDateTime dateTime, ConsultationType type) {
         if (dateTime.isBefore(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A consulta não pode ser no passado.");
         }
 
-        List<LocalTime> availableSlots = getAvailableSlots(physicianNumber, dateTime.toLocalDate());
+        List<LocalTime> availableSlots = getAvailableSlots(physicianId, dateTime.toLocalDate());
 
         if (!availableSlots.contains(dateTime.toLocalTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data selecionada não está disponível para o médico.");
@@ -224,7 +164,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         int next = (max == null) ? 1 : max + 1;
         AppointmentNumber generatedNumber = new AppointmentNumber("APPT-" + next);
 
-        Appointment appointment = new Appointment(dateTime, type, AppointmentStatus.SCHEDULED, patient, physician);
+        Appointment appointment = new Appointment(dateTime, type, AppointmentStatus.SCHEDULED, patientId, physicianId);
         appointment.setAppointmentNumber(generatedNumber);
 
         return appointmentRepository.save(appointment);
@@ -266,26 +206,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 //    }
 
     @Override
-    public List<Appointment> getAppointmentHistory(Long userId) {
-        int i =  patientPort;
-        for(i = patientPort; i <= patientPort + 999; i++) {
-            try {
-                ResponseEntity<Patient> response = restTemplate.getForEntity(
-                        "http://localhost:" + i + "/api/patients/id/" + userId + "/profile", Patient.class);
-
-                if (response.getStatusCode() == HttpStatus.OK || response.getBody() != null) {
-                    break;
-                }
-            } catch (ResourceAccessException e) {
-                // This is likely due to connection issues, e.g., wrong port
-                System.out.println("Cannot connect to port " + i + ": " + e.getMessage());
-                break;  // or handle accordingly
-            }
-        }
-
-        String patientUrl = "http://localhost:" + i + "/api/patients/id/" + userId + "/profile";
-        Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
-        String patientNumber = patient.getPatientNumber();
+    public List<Appointment> getAppointmentHistory(String patientId) {
         return appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
     }
 
@@ -347,6 +268,4 @@ public class AppointmentServiceImpl implements AppointmentService {
                 })
                 .collect(Collectors.toList());
     }
-
-
 }

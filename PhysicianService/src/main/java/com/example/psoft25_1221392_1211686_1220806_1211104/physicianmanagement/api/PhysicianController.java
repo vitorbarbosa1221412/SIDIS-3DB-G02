@@ -50,6 +50,12 @@ public class PhysicianController {
         return physicianService.getPhysicianByNumber(number);
     }
 
+    @Operation(summary = "Get the Working Hours of a Physician by his Id")
+    @GetMapping("/workinghours/{id}")
+    public ResponseEntity<String> getPhysicianWorkingHoursById(@PathVariable Long id) {
+        return physicianService.getPhysicianWorkingHoursById(id);
+    }
+
     @GetMapping
     public ResponseEntity<List<Physician>> searchPhysicians(
             @RequestParam(name = "name", required = false) String name,

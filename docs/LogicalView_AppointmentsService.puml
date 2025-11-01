@@ -1,0 +1,14 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_WITH_LEGEND()
+
+rectangle "Appointment Service" as appointment #line.dashed {
+    Component(controller, "Appointment Controller", "Spring REST Controller", "Handles HTTPS Requests")
+    Component(service, "Appointment Service", "Spring Service", "Handles Appointment Business Logic")
+    Component(repository, "Appointment Repository", "Spring Data", "Handles Data Access")
+
+    Rel(controller, service, "Uses")
+    Rel(service, repository, "Uses")
+}
+
+@enduml

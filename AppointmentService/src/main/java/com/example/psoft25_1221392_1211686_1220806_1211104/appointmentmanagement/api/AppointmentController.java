@@ -79,7 +79,7 @@ public class AppointmentController {
             @AuthenticationPrincipal Jwt principal,
             @Valid @RequestBody ScheduleAppointmentRequest request
     ) {
-        Long userId = principal.getClaim("userId");
+        String userId = principal.getClaim("userId");
 
         Appointment appointment = appointmentService.scheduleAppointmentByPatient(
                 userId,
@@ -95,7 +95,7 @@ public class AppointmentController {
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<List<AppointmentView>> getMyAppointments(@AuthenticationPrincipal Jwt principal) {
         Long userId = principal.getClaim("userId");
-        List<Appointment> history = appointmentService.getAppointmentHistory(userId);
+        List<Appointment> history = appointmentService.getAppointmentHistory(userId.toString());
         List<AppointmentView> views = appointmentMapper.toView(history);
 
         return ResponseEntity.ok(views);

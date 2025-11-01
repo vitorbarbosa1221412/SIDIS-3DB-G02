@@ -77,7 +77,7 @@ public class AppointmentRecordServiceImpl implements AppointmentRecordService {
 
     @Override
     public List<AppointmentRecord> getAppointmentRecordsByPatientNumber(String patientNumber) {
-        List<AppointmentRecord> filteredRecords = appointmentRecordRepository.findByAppointment_Patient_PatientNumber(patientNumber);
+        List<AppointmentRecord> filteredRecords = appointmentRecordRepository.findByAppointment_PatientId(patientNumber);
 
         if (filteredRecords.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No appointment records found for the patient");
@@ -108,7 +108,7 @@ public class AppointmentRecordServiceImpl implements AppointmentRecordService {
             page = new Page(1, 5);
         }
 
-        List<AppointmentRecord> patientRecord = appointmentRecordRepository.searchByPatientNumberAndRecordNumber(patientNumber, recordNumber);
+        List<AppointmentRecord> patientRecord = appointmentRecordRepository.searchByPatientIdAndRecordNumber(patientNumber, recordNumber);
         if (patientRecord.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient or Patient's Record not found");
         } else {
@@ -146,7 +146,7 @@ public class AppointmentRecordServiceImpl implements AppointmentRecordService {
 
     @Override
     public List<AppointmentRecordView> getMyAppointmentRecordsByPatientNumber(String patientNumber) {
-        List<AppointmentRecord> records = appointmentRecordRepository.findByAppointment_Patient_PatientNumber(patientNumber);
+        List<AppointmentRecord> records = appointmentRecordRepository.findByAppointment_PatientId(patientNumber);
         return appointmentRecordViewMapper.toAppointmentRecordView(records);
 
 }}

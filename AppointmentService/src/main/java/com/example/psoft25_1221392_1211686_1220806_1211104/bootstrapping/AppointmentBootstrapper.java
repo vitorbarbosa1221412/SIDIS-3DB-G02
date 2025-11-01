@@ -5,7 +5,6 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.AppointmentStatus;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.ConsultationType;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.repositories.AppointmentRepository;
-import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.Physician;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,12 +13,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -72,22 +69,16 @@ public class AppointmentBootstrapper implements CommandLineRunner {
                     continue;
                 }
 
-                String patientNr = f[0].trim();
-                String physicianNr = f[1].trim();
+                String patientNumber = f[0].trim();
+                String physicianNumber = f[1].trim();
                 LocalDateTime dt = LocalDateTime.parse(f[2].trim());
                 ConsultationType ct = ConsultationType.valueOf(f[3].trim());
                 AppointmentStatus st = AppointmentStatus.valueOf(f[4].trim());
                 LocalDateTime start = parseDateOrNull(f[5].trim()); // <- protegido
                 LocalDateTime end = parseDateOrNull(f[6].trim());   // <- protegido
 
-                String patientUrl = PATIENT_SERVICE_URL + "/number/" + patientNr;
-                Patient patient = restTemplate.getForObject(patientUrl, Patient.class);
-
-                String physicianUrl = PHYSICIAN_SERVICE_URL + "/number/" + physicianNr;
-                Physician physician = restTemplate.getForObject(physicianUrl, Physician.class);
-
-                Optional<Appointment> existing = appointmentRepo.findByPatientAndPhysicianAndDateTime(patient, physician, dt);
-                Appointment a = existing.orElseGet(() -> new Appointment(dt, ct, st, patient, physician));
+                Optional<Appointment> existing = appointmentRepo.findByPatientIdAndPhysicianIdAndDateTime(patientNumber, physicianNumber, dt);
+                Appointment a = existing.orElseGet(() -> new Appointment(dt, ct, st, patientNumber, physicianNumber));
                 a.setStartTime(start);
                 a.setEndTime(end);
                 a.setAppointmentNumber(new AppointmentNumber("APPT-" + counter++));

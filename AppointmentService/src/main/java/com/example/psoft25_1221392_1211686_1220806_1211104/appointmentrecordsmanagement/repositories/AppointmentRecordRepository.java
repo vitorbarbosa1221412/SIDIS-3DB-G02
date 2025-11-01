@@ -28,12 +28,12 @@ public interface AppointmentRecordRepository extends JpaRepository <AppointmentR
     @Query("SELECT MAX(ar.recordNumber) FROM AppointmentRecord ar WHERE FUNCTION('YEAR', ar.appointment) = :year")
     Long getLastRecordNumber(@Param("year") int year);
 
-    List<AppointmentRecord> findByAppointment_Patient_PatientNumber(String patientNumber);
+    List<AppointmentRecord> findByAppointment_PatientId(String patientNumber);
 
     List<AppointmentRecord> getAppointmentRecordByRecordNumber(Long recordNumber);
 
-    @Query("SELECT ar FROM AppointmentRecord ar WHERE ar.appointment.patient.patientNumber = :patientNumber AND ar.recordNumber = :recordNumber")
-    List<AppointmentRecord> searchByPatientNumberAndRecordNumber(String patientNumber, Long recordNumber);
+    @Query("SELECT ar FROM AppointmentRecord ar WHERE ar.appointment.patientId = :patientNumber AND ar.recordNumber = :recordNumber")
+    List<AppointmentRecord> searchByPatientIdAndRecordNumber(String patientNumber, Long recordNumber);
 
     @Query("SELECT ar.appointment.patientId, " +
             "ar.appointment.physicianId, " +

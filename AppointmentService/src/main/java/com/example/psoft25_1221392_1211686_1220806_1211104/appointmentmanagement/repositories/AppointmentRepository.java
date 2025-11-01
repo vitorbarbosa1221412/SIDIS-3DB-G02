@@ -35,7 +35,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
                 .orElseThrow(() -> new NotFoundException(Appointment.class, appointmentNumber));
     }
-    Optional<Appointment> findByPatientAndPhysicianAndDateTime(
+    Optional<Appointment> findByPatientIdAndPhysicianIdAndDateTime(
             String patientId,
             String physicianId,
             LocalDateTime dateTime);
@@ -57,7 +57,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("SELECT MAX(CAST(SUBSTRING(a.appointmentNumber.value, 6) AS int)) FROM Appointment a")
     Integer findMaxAppointmentNumber();
 
-    List<Appointment> findByPatientIdOrderByDateTimeDesc(String patientNumber);
+    List<Appointment> findByPatientIdOrderByDateTimeDesc(String patientId);
 
     @Query("""
     SELECT a FROM Appointment a

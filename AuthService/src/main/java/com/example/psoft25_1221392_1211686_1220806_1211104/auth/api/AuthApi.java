@@ -23,23 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails; // Import necessário
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Tag(name = "Authentication")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(path = "api/auth") // ALTERADO O PATH
+@RequestMapping(path = "api/auth")
 public class AuthApi {
 
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
 
-    // REMOVIDOS:
-    // private final UserViewMapper userViewMapper;
-    // private final UserService userService;
-
+    // Método de Login: Autentica o utilizador e emite um JWT
     @PostMapping("login")
-    // O retorno é alterado para String (o JWT), pois UserView é desconhecido
     public ResponseEntity<String> login(@RequestBody @Valid final AuthRequest request) {
         try {
             final Authentication authentication = authenticationManager.authenticate(
@@ -49,7 +45,7 @@ public class AuthApi {
             final UserDetails user = (UserDetails) authentication.getPrincipal();
 
             final Instant now = Instant.now();
-            final long expiry = 3600L; // 1 hora ( 3600 segundos)
+            final long expiry = 3600L; // 1 hora de validade para o token de utilizador
 
             final String scope = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
                     .collect(joining(" "));
@@ -58,38 +54,60 @@ public class AuthApi {
             final String userIdPlaceholder = user.getUsername() + "_id";
 
             final JwtClaimsSet claims = JwtClaimsSet.builder()
-                    .issuer("https://auth-service:8443") // ALTERADO para o domínio do AuthService
+                    // CRÍTICO: Emissor consistente com a configuração de teste local
+                    .issuer("https://localhost:8443")
                     .issuedAt(now)
                     .expiresAt(now.plusSeconds(expiry))
-                    .subject(format("%s", user.getUsername())) // Usamos apenas o username/subject
+                    .subject(format("%s", user.getUsername()))
                     .claim("roles", scope)
-                    .claim("userId", userIdPlaceholder) // Placeholder. Deve ser o ID real
+                    .claim("userId", userIdPlaceholder)
                     .build();
 
             final String token = this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
-            // Retornamos apenas o token no corpo e no cabeçalho
+            // Retornamos o token no corpo e no cabeçalho
             return ResponseEntity.ok()
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .body(token);
+
         } catch (final BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
     /**
-     * signup to the service
-     *
-     * @param request
-     * @return
+     * Endpoint interno para o RemoteUserDetailsService.
+     * Emite um JWT interno com a role INTERNAL_SERVICE para uso entre microsserviços.
      */
-    //
-    //
+    @PostMapping("service-token")
+    public ResponseEntity<String> getInternalServiceToken() {
+
+        final String serviceUsername = "hap-auth-service";
+        final String serviceRole = "INTERNAL_SERVICE";
+
+        final Instant now = Instant.now();
+        final long expiry = 300L; // 5 minutos de validade para o token de serviço
+
+        final String scope = serviceRole;
+
+        final JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("https://localhost:8443") // Emissor consistente
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(expiry))
+                .subject(serviceUsername)
+                .claim("roles", scope)
+                .claim("service_id", serviceUsername)
+                .build();
+
+        final String token = this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        return ResponseEntity.ok(token);
+    }
+
     /*
     @PostMapping("register")
     public UserView register(@RequestBody @Valid final CreateUserRequest request) {
-        final var user = userService.create(request);
-        return userViewMapper.toUserView(user);
+        // ... Lógica de registo movida para o Patient/PhysicianService
     }
     */
-};
+}

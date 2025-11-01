@@ -13,3 +13,28 @@ PostgreSQl most be installed in the system and it needs to have a user named "po
 We decided to use nginx for the load balancing of the instances of a respective service, one of the reasons for that necessity is the fact that all the instances of the same service share the repository, so we want to make sure that none of the instances got overloaded.
 
 PostgreSQL was our choice for the database, it's open source and for our project it fit perfectly to have a shared databases between services.
+
+# Autoavaliação
+### 1221412 - Vítor Barbosa
+
+| Nome               | Número      | Nota |
+|--------------------|-------------|------|
+| Vítor Barbosa      | 1221412     | 15   |
+| Carlos Oliveira    | 1220806     | 15   |
+| Henrique Gonçalves | 1200968     | 15   | 
+
+### 1220806 - Carlos Oliveira
+
+| Nome               | Número      | Nota |
+|--------------------|-------------|------|
+| Vítor Barbosa      | 1221412     |      |
+| Carlos Oliveira    | 1220806     |      |
+| Henrique Gonçalves | 1200968     |      | 
+
+### 1200968 - Henrique Gonçalves
+
+| Nome               | Número      | Nota |
+|--------------------|-------------|------|
+| Vítor Barbosa      | 1221412     |      |
+| Carlos Oliveira    | 1220806     |      |
+| Henrique Gonçalves | 1200968     |      | 

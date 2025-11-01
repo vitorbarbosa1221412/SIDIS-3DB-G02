@@ -1,0 +1,34 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+title Physical View for the Healthcare Administration Platform (HAP).
+
+rectangle "Computer" as computer {
+    Component(appSer1, "Appointment Service Instance #1", "REST API (Port 4000)", "Instance #1 of the Appointment Service App")
+    Component(appSer2, "Appointment Service Instance #2", "REST API (Port 4001)", "Instance #2 of the Appointment Service App")
+    Component(paSer1, "Patient Service Instance #1", "REST API (Port 3000)", "Instance #1 of the Patient Service App")
+    Component(paSer2, "Patient Service Instance #2", "REST API (Port 3001)", "Instance #2 of the Patient Service App")
+    Component(phSer1, "Physician Service Instance #1", "REST API (Port 5000)", "Instance #1 of the Physician Service App")
+    Component(phSer2, "Physician Service Instance #2", "REST API (Port 5001)", "Instance #2 of the Physician Service App")
+    Component(appSerX, "Appointment Service Instance #X", "REST API (Port XXXX)", "Instance #X of the Appointment Service App")
+    Component(paSerY, "Patient Service Instance #Y", "REST API (Port YYYY)", "Instance #Y of the Patient Service App")
+    Component(phSerZ, "Physician Service Instance #Z", "REST API (Port ZZZZ)", "Instance #Z of the Physician Service App")
+
+
+    Component(dbApp, "Appointment Database", "PostgreSQL (Port 5432)", "Database for the data of the Appointment Instances")
+    Component(dbPa, "Patient Database", "PostgreSQL (Port 5432)", "Database for the data of the Patient Instances")
+    Component(dbPh, "Physician Database", "PostgreSQL (Port 5432)", "Database for the data of the Physician Instances")
+
+    Rel(appSer1, dbApp, "Read/Writes")
+    Rel(appSer2, dbApp, "Read/Writes")
+    Rel(appSerX, dbApp, "More Instances If Necessary")
+    Rel(paSer1, dbPa, "Read/Writes")
+    Rel(paSer2, dbPa, "Read/Writes")
+    Rel(paSerY, dbPa, "More Instances If Necessary")
+    Rel(phSer1, dbPh, "Read/Writes")
+    Rel(phSer2, dbPh, "Read/Writes")
+    Rel(phSerZ, dbPh, "More Instances If Necessary")
+}
+
+@enduml

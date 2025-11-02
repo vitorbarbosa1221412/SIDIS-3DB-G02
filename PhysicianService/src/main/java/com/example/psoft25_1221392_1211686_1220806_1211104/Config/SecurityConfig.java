@@ -1,21 +1,33 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.Config;
-
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.Role;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // IMPORT NECESSÁRIO
-import org.springframework.security.crypto.password.PasswordEncoder; // IMPORT NECESSÁRIO
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
@@ -24,10 +36,23 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.repositories.UserRepository;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Collection;
+import java.util.Collections;
 
 import static java.lang.String.format;
 
+/**
+ * Check https://www.baeldung.com/security-spring and
+ * https://www.toptal.com/spring/spring-security-tutorial
+ * <p>
+ * Based on https://github.com/Yoh0xFF/java-spring-security-example/
+ *
+ * @author pagsousa
+ *
+ */
 @SuppressWarnings("removal")
 @EnableWebSecurity
 @Configuration
@@ -36,12 +61,13 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final UserRepository userRepo;
+
     @Value("${jwt.public.key}")
     private RSAPublicKey rsaPublicKey;
 
-    // Mantida apenas para evitar erro de compilação, mas não é usada neste serviço.
     @Value("${jwt.private.key}")
-    private String rsaPrivateKeyPlaceholder;
+    private RSAPrivateKey rsaPrivateKey;
 
     @Value("${springdoc.api-docs.path}")
     private String restApiDocPath;
@@ -49,12 +75,20 @@ public class SecurityConfig {
     @Value("${springdoc.swagger-ui.path}")
     private String swaggerPath;
 
-    // =========================================================================
-    // REINTRODUZIDO O BEAN PASSWORDENCODER PARA SATISFAZER O USER SERVICE
-    // =========================================================================
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public AuthenticationManager authenticationManager(final UserDetailsService userDetailsService,
+                                                       final PasswordEncoder passwordEncoder) {
+        final DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+
+        return new ProviderManager(authenticationProvider);
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> userRepo.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(format("User: %s, not found", username)));
     }
 
 
@@ -63,7 +97,7 @@ public class SecurityConfig {
         // Enable CORS and disable CSRF
         http = http.cors(Customizer.withDefaults()).csrf(csrf -> csrf.disable());
 
-        // Permitir o uso de frames (necessário para H2 console)
+        // 👇 Permitir o uso de frames (necessário para H2 console)
         http.headers(headers -> headers.frameOptions().disable());
 
         // Set session management to stateless
@@ -87,15 +121,14 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/patients").permitAll() //WP2B
+
+
                 .requestMatchers("/api/registerPatient").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/patient").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/patient/{patientNumber}").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/patient/search").permitAll()
 
-                // ADIÇÃO CRÍTICA: PROTEGER O ENDPOINT INTERNO
-                .requestMatchers("/api/internal/**").hasRole("INTERNAL_SERVICE")
-
-                // Private endpoints Patient (Autorização baseada no JWT)
+                // Private endpoints Patient
                 .requestMatchers("/api/admin/user/**").hasRole(Role.ADMIN)
                 .requestMatchers(HttpMethod.GET,"/api/patients/{name}/profile").hasRole(Role.ADMIN)
                 .requestMatchers(HttpMethod.GET,"/api/patient/search/**").hasRole(Role.PHYSICIAN)
@@ -127,11 +160,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/patient/{patientNumber}").hasAnyRole(Role.PHYSICIAN, Role.PATIENT)
                 .requestMatchers(HttpMethod.PUT, "/{recordNumber}").hasAnyRole(Role.PHYSICIAN)
                 .requestMatchers(HttpMethod.GET, "/search/{patientNumber}/{recordNumber}").hasAnyRole(Role.PHYSICIAN)
-                .requestMatchers(HttpMethod.GET, "/getAll").hasRole(Role.ADMIN)
-                .requestMatchers(HttpMethod.GET, "/electronic-prescription/{recordNumber}").hasRole(Role.PHYSICIAN)
+                .requestMatchers(HttpMethod.GET, "/getAll").hasAnyRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET, "/electronic-prescription/{recordNumber}").hasAnyRole(Role.PHYSICIAN)
 
                 .anyRequest().authenticated()
                 .and()
+                .httpBasic(Customizer.withDefaults())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 );
@@ -141,13 +175,21 @@ public class SecurityConfig {
     }
 
 
-    // MANTIDO: Usado para descodificar e validar JWT tokens do AuthService
+    // Used by JwtAuthenticationProvider to generate JWT tokens
+    @Bean
+    public JwtEncoder jwtEncoder() {
+        final JWK jwk = new RSAKey.Builder(this.rsaPublicKey).privateKey(this.rsaPrivateKey).build();
+        final JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+        return new NimbusJwtEncoder(jwks);
+    }
+
+    // Used by JwtAuthenticationProvider to decode and validate JWT tokens
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(this.rsaPublicKey).build();
     }
 
-    // MANTIDO: Extrai autoridades (roles) do claim 'roles' do JWT
+    // Extract authorities from the roles claim
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -159,7 +201,14 @@ public class SecurityConfig {
         return jwtAuthenticationConverter;
     }
 
-    // MANTIDO: Usado por spring security se CORS for ativado.
+
+    // Set password encoding schema
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // Used by spring security if CORS is enabled.
     @Bean
     public CorsFilter corsFilter() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -171,5 +220,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
-}
 
+}

@@ -26,7 +26,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
 //    List<Appointment> findByPatientId(String patientId, Pageable page);
 
-//    List<Appointment> findByPhysicianId(String physicianId, Pageable page);
+//    List<Appointment> findByPhysicianPhysicianNumber(String physicianId, Pageable page);
 
     List<Appointment> findByStatus(AppointmentStatus status, Pageable page);
 
@@ -35,9 +35,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
                 .orElseThrow(() -> new NotFoundException(Appointment.class, appointmentNumber));
     }
-    Optional<Appointment> findByPatientIdAndPhysicianIdAndDateTime(
+    Optional<Appointment> findByPatientIdAndPhysicianNumberAndDateTime(
             String patientId,
-            String physicianId,
+            String physicianNumber,
             LocalDateTime dateTime);
 
 //    @Query("SELECT a.physicianId FROM Appointment a GROUP BY a.physicianId ORDER BY COUNT(a) DESC")
@@ -45,11 +45,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     @Query("""
     SELECT a FROM Appointment a
-    WHERE a.physicianId = :physicianId
+    WHERE a.physicianNumber = :physicianNumber
     AND a.dateTime BETWEEN :start AND :end
 """)
     List<Appointment> findAppointmentsByPhysicianNumberAndDate(
-            @Param("physicianId") String physicianId,
+            @Param("physicianNumber") String physicianNumber,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );

@@ -4,11 +4,11 @@ import lombok.Getter;
 
 @Getter
 public class PhysicianAverageDurationDTO {
-    private String physicianId;
+    private String physicianNumber;
     private double averageDurationSeconds;
 
-    public PhysicianAverageDurationDTO(String physicianId, double averageDurationSeconds) {
-        this.physicianId = physicianId;
+    public PhysicianAverageDurationDTO(String physicianNumber, double averageDurationSeconds) {
+        this.physicianNumber = physicianNumber;
         this.averageDurationSeconds = averageDurationSeconds;
     }
 }

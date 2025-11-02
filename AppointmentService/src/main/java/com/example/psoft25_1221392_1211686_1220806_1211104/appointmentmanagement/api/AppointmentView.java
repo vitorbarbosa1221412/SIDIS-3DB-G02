@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class AppointmentView {
     private String appointmentNumber;
     private String patientId;
-    private String physicianId;
+    private String physicianNumber;
     private LocalDateTime appointmentDate;
     private LocalDateTime startTime;
     private LocalDateTime endTime;

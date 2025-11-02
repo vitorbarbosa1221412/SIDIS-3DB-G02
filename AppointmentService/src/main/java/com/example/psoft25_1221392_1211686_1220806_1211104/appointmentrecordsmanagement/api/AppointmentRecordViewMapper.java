@@ -19,7 +19,7 @@ public interface AppointmentRecordViewMapper {
             @Mapping(source = "appointment.consultationType", target = "consultationType"),
             @Mapping(source = "appointment.status", target = "status"),
             @Mapping(source = "appointment.patientId", target = "patientId"),
-            @Mapping(source = "appointment.physicianId", target = "physicianId"),
+            @Mapping(source = "appointment.physicianNumber", target = "physicianNumber"),
     })
     AppointmentRecordView toAppointmentRecordView(AppointmentRecord record);
 

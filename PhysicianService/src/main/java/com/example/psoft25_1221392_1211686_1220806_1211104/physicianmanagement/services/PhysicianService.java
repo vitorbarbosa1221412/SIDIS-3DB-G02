@@ -16,7 +16,7 @@ public interface PhysicianService {
 
     ResponseEntity<Physician> getPhysicianById(Long physicianId);
 
-    ResponseEntity<String> getPhysicianWorkingHoursById(Long physicianId);
+    ResponseEntity<String> getPhysicianWorkingHoursByPhysicianNumber(String physicianId);
 
 
     ResponseEntity<Physician> getPhysicianByNumber(String physicianNumber);

@@ -108,7 +108,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date) {
-        String physicianUrl = "http://localhost:5000/api/physician/workinghours/" + physicianNumber;
+        String physicianUrl = "http://localhost:8080/api/physicians/workinghours/" + physicianNumber;
         String physicianWorkingHours = restTemplate.getForObject(physicianUrl, String.class);
 
         // 1. Obter o médico
@@ -148,12 +148,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .collect(Collectors.toList());
     }
     @Override
-    public Appointment scheduleAppointmentByPatient(String patientId, String physicianId, LocalDateTime dateTime, ConsultationType type) {
+    public Appointment scheduleAppointmentByPatient(String patientId, String physicianNumber, LocalDateTime dateTime, ConsultationType type) {
         if (dateTime.isBefore(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A consulta não pode ser no passado.");
         }
 
-        List<LocalTime> availableSlots = getAvailableSlots(physicianId, dateTime.toLocalDate());
+        List<LocalTime> availableSlots = getAvailableSlots(physicianNumber, dateTime.toLocalDate());
 
         if (!availableSlots.contains(dateTime.toLocalTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data selecionada não está disponível para o médico.");
@@ -164,7 +164,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         int next = (max == null) ? 1 : max + 1;
         AppointmentNumber generatedNumber = new AppointmentNumber("APPT-" + next);
 
-        Appointment appointment = new Appointment(dateTime, type, AppointmentStatus.SCHEDULED, patientId, physicianId);
+        Appointment appointment = new Appointment(dateTime, type, AppointmentStatus.SCHEDULED, patientId, physicianNumber);
         appointment.setAppointmentNumber(generatedNumber);
 
         return appointmentRepository.save(appointment);

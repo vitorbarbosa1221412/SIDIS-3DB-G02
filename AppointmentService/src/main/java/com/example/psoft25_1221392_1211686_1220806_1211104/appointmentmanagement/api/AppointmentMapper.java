@@ -9,8 +9,8 @@ import java.util.List;
 public interface AppointmentMapper {
 
     @Mapping(source = "appointmentNumber.value", target = "appointmentNumber")
-    @Mapping(source = "physicianId",   target = "patientId")
-    @Mapping(source = "physicianId", target = "physicianId")
+    @Mapping(source = "patientId",   target = "patientId")
+    @Mapping(source = "physicianNumber", target = "physicianNumber")
     @Mapping(source = "dateTime",     target = "appointmentDate")
     AppointmentView toView(Appointment appointment);
 
@@ -18,7 +18,7 @@ public interface AppointmentMapper {
 
     @Mapping(target = "appointmentNumber", expression = "java(new AppointmentNumber(view.getAppointmentNumber()))")
     @Mapping(source = "patientId",   target = "patientId")
-    @Mapping(source = "physicianId", target = "physicianId")
+    @Mapping(source = "physicianNumber", target = "physicianNumber")
     @Mapping(source = "appointmentDate", target = "dateTime")
     Appointment toEntity(AppointmentView view);
 

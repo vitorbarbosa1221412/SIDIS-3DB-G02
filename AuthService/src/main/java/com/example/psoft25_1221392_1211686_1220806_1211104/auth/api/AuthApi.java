@@ -2,9 +2,7 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.auth.api;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
-
 import java.time.Instant;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,13 +32,12 @@ public class AuthApi {
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
 
-    // Método de Login: Autentica o utilizador e emite um JWT
+    // Metodo de Login: Autentica o utilizador e emite um JWT
     @PostMapping("login")
     public ResponseEntity<String> login(@RequestBody @Valid final AuthRequest request) {
         try {
             final Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-
 
             final UserDetails user = (UserDetails) authentication.getPrincipal();
 
@@ -75,39 +72,30 @@ public class AuthApi {
         }
     }
 
-    /**
-     * Endpoint interno para o RemoteUserDetailsService.
-     * Emite um JWT interno com a role INTERNAL_SERVICE para uso entre microsserviços.
-     */
-    @PostMapping("service-token")
-    public ResponseEntity<String> getInternalServiceToken() {
-
-        final String serviceUsername = "hap-auth-service";
-        final String serviceRole = "INTERNAL_SERVICE";
-
-        final Instant now = Instant.now();
-        final long expiry = 300L; // 5 minutos de validade para o token de serviço
-
-        final String scope = serviceRole;
-
-        final JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("https://localhost:8443") // Emissor consistente
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(expiry))
-                .subject(serviceUsername)
-                .claim("roles", scope)
-                .claim("service_id", serviceUsername)
-                .build();
-
-        final String token = this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-
-        return ResponseEntity.ok(token);
-    }
-
-    /*
-    @PostMapping("register")
-    public UserView register(@RequestBody @Valid final CreateUserRequest request) {
-        // ... Lógica de registo movida para o Patient/PhysicianService
-    }
-    */
+    // Endpoint interno para o RemoteUserDetailsService.
+    // Emite um JWT interno com a role INTERNAL_SERVICE para uso entre microsserviços.
+//    @PostMapping("service-token")
+//    public ResponseEntity<String> getInternalServiceToken() {
+//
+//        final String serviceUsername = "hap-auth-service";
+//        final String serviceRole = "INTERNAL_SERVICE";
+//
+//        final Instant now = Instant.now();
+//        final long expiry = 300L; // 5 minutos de validade para o token de serviço
+//
+//        final String scope = serviceRole;
+//
+//        final JwtClaimsSet claims = JwtClaimsSet.builder()
+//                .issuer("https://localhost:8443") // Emissor consistente
+//                .issuedAt(now)
+//                .expiresAt(now.plusSeconds(expiry))
+//                .subject(serviceUsername)
+//                .claim("roles", scope)
+//                .claim("service_id", serviceUsername)
+//                .build();
+//
+//        final String token = this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+//
+//        return ResponseEntity.ok(token);
+//    }
 }

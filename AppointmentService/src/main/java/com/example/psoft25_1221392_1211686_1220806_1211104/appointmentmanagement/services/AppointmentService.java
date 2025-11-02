@@ -28,7 +28,7 @@ public interface AppointmentService {
 
     List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date);
 
-    Appointment scheduleAppointmentByPatient(String patientId, String physicianId, LocalDateTime dateTime, ConsultationType type);
+    Appointment scheduleAppointmentByPatient(String patientId, String physicianNumber, LocalDateTime dateTime, ConsultationType type);
 
 //    List<AgeGroupStats> getAppointmentStatsByAgeGroup();
 

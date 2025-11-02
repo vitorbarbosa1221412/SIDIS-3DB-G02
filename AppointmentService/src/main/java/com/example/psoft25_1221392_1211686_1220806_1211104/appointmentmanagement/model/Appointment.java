@@ -37,7 +37,7 @@ public class Appointment {
 
     private String patientId;
 
-    private String physicianId;
+    private String physicianNumber;
 
     // @OneToOne(mappedBy = "appointment", cascade = CascadeType.ALL)
    // private AppointmentRecord appointmentRecord;
@@ -48,13 +48,13 @@ public class Appointment {
 
 
     public Appointment(LocalDateTime dateTime, ConsultationType consultationType, AppointmentStatus status,
-                       String patientId, String physicianId) {
+                       String patientId, String physicianNumber) {
         this();
         this.dateTime = dateTime;
         this.consultationType = consultationType;
         this.status = status;
         this.patientId = patientId;
-        this.physicianId = physicianId;
+        this.physicianNumber = this.physicianNumber;
 
     }
 }

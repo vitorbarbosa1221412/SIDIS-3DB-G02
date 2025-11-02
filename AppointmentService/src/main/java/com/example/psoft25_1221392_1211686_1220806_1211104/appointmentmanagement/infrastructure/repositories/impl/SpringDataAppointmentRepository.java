@@ -20,7 +20,7 @@ public interface SpringDataAppointmentRepository
 
     @Query("""
     SELECT a FROM Appointment a
-    WHERE a.physicianId = :physicianId
+    WHERE a.physicianNumber = :physicianNumber
     AND a.dateTime BETWEEN :start AND :end
 """)
     List<Appointment> findAppointmentsByPhysicianNumberAndDate(

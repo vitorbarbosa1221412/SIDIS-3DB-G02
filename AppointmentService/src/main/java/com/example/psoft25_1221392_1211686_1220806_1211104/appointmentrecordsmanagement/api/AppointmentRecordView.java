@@ -20,7 +20,7 @@ public class AppointmentRecordView {
     private String consultationType;
     private String status;
     private String patientId;
-    private String physicianId;
+    private String physicianNumber;
 }
 
 

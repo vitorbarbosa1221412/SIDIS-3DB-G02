@@ -36,7 +36,7 @@ public interface AppointmentRecordRepository extends JpaRepository <AppointmentR
     List<AppointmentRecord> searchByPatientIdAndRecordNumber(String patientNumber, Long recordNumber);
 
     @Query("SELECT ar.appointment.patientId, " +
-            "ar.appointment.physicianId, " +
+            "ar.appointment.physicianNumber, " +
             "ar.prescription " +
             "FROM AppointmentRecord ar " +
             "WHERE ar.recordNumber = :recordNumber")

@@ -77,7 +77,7 @@ public class AppointmentBootstrapper implements CommandLineRunner {
                 LocalDateTime start = parseDateOrNull(f[5].trim()); // <- protegido
                 LocalDateTime end = parseDateOrNull(f[6].trim());   // <- protegido
 
-                Optional<Appointment> existing = appointmentRepo.findByPatientIdAndPhysicianIdAndDateTime(patientNumber, physicianNumber, dt);
+                Optional<Appointment> existing = appointmentRepo.findByPatientIdAndPhysicianNumberAndDateTime(patientNumber, physicianNumber, dt);
                 Appointment a = existing.orElseGet(() -> new Appointment(dt, ct, st, patientNumber, physicianNumber));
                 a.setStartTime(start);
                 a.setEndTime(end);

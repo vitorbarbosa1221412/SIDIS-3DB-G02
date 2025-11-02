@@ -11,6 +11,7 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.servic
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.Role;
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.api.UserInternalDTO; // Importa o DTO que o AuthService espera
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 
 
@@ -95,9 +96,10 @@ public class PhysicianController {
     }
 
     @Operation(summary = "Get the Working Hours of a Physician by his Id")
-    @GetMapping("/workinghours/{id}")
-    public ResponseEntity<String> getPhysicianWorkingHoursById(@PathVariable Long id) {
-        return physicianService.getPhysicianWorkingHoursById(id);
+    @GetMapping("/workinghours/{physicianNumber}")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<String> getPhysicianWorkingHoursByPhysicianNumber(@PathVariable String physicianNumber) {
+        return physicianService.getPhysicianWorkingHoursByPhysicianNumber(physicianNumber);
     }
 
     @GetMapping

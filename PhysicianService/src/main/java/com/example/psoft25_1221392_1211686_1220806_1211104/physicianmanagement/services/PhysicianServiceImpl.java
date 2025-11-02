@@ -90,8 +90,8 @@ public class PhysicianServiceImpl implements PhysicianService {
     }
 
     @Override
-    public ResponseEntity<String> getPhysicianWorkingHoursById(Long physicianId) {
-        Physician physician = physicianRepo.findById(physicianId).orElse(null);
+    public ResponseEntity<String> getPhysicianWorkingHoursByPhysicianNumber(String physicianNumber) {
+        Physician physician = physicianRepo.findByPhysicianNumber(physicianNumber).orElse(null);
         if (physician == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Physician not found");
         } else {

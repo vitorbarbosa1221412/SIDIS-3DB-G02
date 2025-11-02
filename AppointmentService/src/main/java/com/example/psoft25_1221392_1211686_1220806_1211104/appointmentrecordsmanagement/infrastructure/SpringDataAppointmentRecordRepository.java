@@ -48,7 +48,7 @@ public interface SpringDataAppointmentRecordRepository extends AppointmentRecord
 //    List<AppointmentRecord> getAppointmentRecordByPatient(String patientId);
 
     @Query("SELECT ar.appointment.patientId, " +
-            "ar.appointment.physicianId, " +
+            "ar.appointment.physicianNumber, " +
             "ar.prescription " +
             "FROM AppointmentRecord ar " +
             "WHERE ar.recordNumber = :recordNumber")

@@ -72,7 +72,7 @@ public class PhysicianServiceTest {
         mockUser.setEnabled(true);
         mockUser.setFullName("Dr. João Silva");
 
-        // Initialize mock physician with CORRECT data that matches your actual implementation
+
         mockPhysician = new Physician(
                 1L,
                 "Dr. João Silva",
@@ -80,8 +80,8 @@ public class PhysicianServiceTest {
                 "911111111",
                 "joao.silva@hospital.pt",
                 "Cardiology",
-                "Cardiologist",  // Changed from "Cardiology" to match actual
-                "09:00-17:00",   // Changed from "Mon-Fri 9h-17h" to match actual
+                "Cardiologist",
+                "09:00-17:00",
                 null
         );
         mockPhysician.setUser(mockUser);
@@ -95,8 +95,8 @@ public class PhysicianServiceTest {
         createRequest.setPassword("Aa123456!");
         createRequest.setEmailAddress("ricardo.lima@hospital.pt");
         createRequest.setDepartment("Cardiology");
-        createRequest.setSpecialty("Cardiologist");  // Make sure this matches
-        createRequest.setWorkingHours("09:00-17:00"); // Make sure this matches
+        createRequest.setSpecialty("Cardiologist");
+        createRequest.setWorkingHours("09:00-17:00");
 
         // Initialize update request
         updateRequest = new UpdatePhysicianRequest();
@@ -161,38 +161,31 @@ public class PhysicianServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ((ResponseStatusException) exception).getStatusCode());
     }
 
-    // =========================================================================
-    // 3. getPhysicianWorkingHoursById Tests
-    // =========================================================================
-
     @Test
-    void getPhysicianWorkingHoursById_Found_ReturnsOk() {
+    void getPhysicianWorkingHoursByPhysicianNumber_Found_ReturnsOk() {
         // Arrange
-        when(physicianRepository.findById(1L)).thenReturn(Optional.of(mockPhysician));
+        when(physicianRepository.findByPhysicianNumber("PH-2025-1")).thenReturn(Optional.of(mockPhysician));
 
         // Act
-        ResponseEntity<String> response = physicianService.getPhysicianWorkingHoursById(1L);
+        ResponseEntity<String> response = physicianService.getPhysicianWorkingHoursByPhysicianNumber("PH-2025-1");
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("09:00-17:00", response.getBody()); // Fixed assertion
+        assertEquals("09:00-17:00", response.getBody());
     }
 
     @Test
-    void getPhysicianWorkingHoursById_NotFound_ThrowsResponseStatusException() {
+    void getPhysicianWorkingHoursByPhysicianNumber_NotFound_ThrowsResponseStatusException() {
         // Arrange
-        when(physicianRepository.findById(2L)).thenReturn(Optional.empty());
+        when(physicianRepository.findByPhysicianNumber("PH-2025-999")).thenReturn(Optional.empty());
 
         // Act & Assert
         Exception exception = assertThrows(ResponseStatusException.class, () ->
-                physicianService.getPhysicianWorkingHoursById(2L)
+                physicianService.getPhysicianWorkingHoursByPhysicianNumber("PH-2025-999")
         );
         assertEquals(HttpStatus.NOT_FOUND, ((ResponseStatusException) exception).getStatusCode());
     }
 
-    // =========================================================================
-    // 4. getPhysicianByNumber Tests
-    // =========================================================================
 
     @Test
     void getPhysicianByNumber_Found_ReturnsOk() {
@@ -234,8 +227,7 @@ public class PhysicianServiceTest {
         when(physicianRepository.findByPhysicianNumber(physicianNumber)).thenReturn(Optional.of(mockPhysician));
         doNothing().when(physicianEditMapper).update(updateRequest, mockPhysician);
 
-        // FIX: Manually update mockPhysician to reflect the expected changes
-        // This simulates what the real mapper.update() would do, ensuring assertions pass.
+
         mockPhysician.setName(updateRequest.getName());
         mockPhysician.setAddress(updateRequest.getAddress());
         mockPhysician.setPhoneNumber(updateRequest.getPhoneNumber());
@@ -318,7 +310,7 @@ public class PhysicianServiceTest {
         Long physicianId = 1L;
         Long patientId = 200L;
 
-        // FIX: Use lenient() on both stubbings to prevent UnnecessaryStubbingException
+
         lenient().when(physicianRepository.findById(physicianId)).thenReturn(Optional.of(mockPhysician));
         lenient().when(patientClient.patientExists(patientId)).thenReturn(false);
 

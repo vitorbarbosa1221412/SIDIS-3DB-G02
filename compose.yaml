@@ -1,0 +1,25 @@
+services:
+  appointment_service1:
+    build: AppointmentService
+    ports:
+      - "4000:4000"
+  appointment_service2:
+    build: AppointmentService
+    ports:
+      - "4001:4001"
+  patient_service1:
+    build: PatientService
+    ports:
+      - "3000:3000"
+  patient_service2:
+    build: PatientService
+    ports:
+      - "3001:3001"
+  physician_service1:
+    build: PhysicianService
+    ports:
+      - "5000:5000"
+  physician_service2:
+    build: PhysicianService
+    ports:
+      - "5001:5001"

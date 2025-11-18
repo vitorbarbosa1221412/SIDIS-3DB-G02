@@ -23,3 +23,11 @@ services:
     build: PhysicianService
     ports:
       - "5001:5001"
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: UoU4CrIoGNgOtK31
+      postgres-data: /home/asus/IdeaProjects/SIDIS-25-26/dockerData

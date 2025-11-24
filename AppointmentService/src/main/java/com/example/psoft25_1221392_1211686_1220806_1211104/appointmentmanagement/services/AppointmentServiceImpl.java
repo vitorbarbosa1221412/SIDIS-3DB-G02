@@ -108,7 +108,9 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     public List<LocalTime> getAvailableSlots(String physicianNumber, LocalDate date) {
-        String physicianUrl = "http://localhost:8080/api/physicians/workinghours/" + physicianNumber;
+
+        String physicianUrl = url_physician + ":" + physicianPort + "/api/physicians/workinghours/" + physicianNumber;
+
         String physicianWorkingHours = restTemplate.getForObject(physicianUrl, String.class);
 
         // 1. Obter o médico

@@ -8,8 +8,11 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsman
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.model.AppointmentRecord;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentrecordsmanagement.repositories.AppointmentRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier; // Import necessário
+import org.springframework.beans.factory.annotation.Value; // Import necessário
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate; // Import necessário
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -17,6 +20,18 @@ import java.util.List;
 
 @Service
 public class AppointmentRecordServiceImpl implements AppointmentRecordService {
+
+    //
+    @Autowired
+    @Qualifier("restTemplateWithAuth")
+    private RestTemplate restTemplate;
+
+    @Value("${patient.port}")
+    private int patientPort;
+
+    @Value("${PATIENT_SERVICE_URL}")
+    private String url_patient;
+    //
 
     @Autowired
     private AppointmentRecordRepository appointmentRecordRepository;
@@ -133,6 +148,22 @@ public class AppointmentRecordServiceImpl implements AppointmentRecordService {
             String physicianNumber = (String) row[1];
             String prescription = (String) row[2];
 
+            // CHAMADA EXTERNA (HTTPS)
+            try {
+
+                String patientServiceUrl = url_patient + ":" + patientPort + "/api/patients/" + patientId;
+
+
+                String patientDetails = restTemplate.getForObject(patientServiceUrl, String.class);
+
+
+                System.out.println("Detalhes do paciente obtidos via HTTPS: " + patientDetails);
+
+            } catch (Exception e) {
+                System.err.println("Falha ao buscar detalhes do paciente " + patientId + " do Patient Service (HTTPS): " + e.getMessage());
+            }
+
+
             electronicPrescription.add(new ElectronicPrescriptionDTO(
                     patientId,
                     physicianNumber,
@@ -149,6 +180,6 @@ public class AppointmentRecordServiceImpl implements AppointmentRecordService {
         List<AppointmentRecord> records = appointmentRecordRepository.findByAppointment_PatientId(patientNumber);
         return appointmentRecordViewMapper.toAppointmentRecordView(records);
 
-}}
+    }}
 
 

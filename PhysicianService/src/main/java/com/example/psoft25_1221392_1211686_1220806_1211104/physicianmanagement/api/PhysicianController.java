@@ -41,9 +41,7 @@ public class PhysicianController {
     @Autowired
     private UserService userService;
 
-    // =============================================================
-    // ENDPOINT INTERNO CORRIGIDO (FORNECE CREDENCIAIS AO AUTHSERVICE)
-    // =============================================================
+
     @GetMapping("/internal/users/{username}")
     public ResponseEntity<UserInternalDTO> getUserDetailsForAuth(@PathVariable String username) {
 

@@ -8,28 +8,47 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import org.springframework.web.client.RestTemplate;
 
 /**
- * Lê src/main/resources/Patient.txt (CSV delimitado por ;) e popula a tabela PATIENT.
- * Se o campo patientNumber vier vazio, gera-o no formato AAAA/N onde N é incremental.
+ * Popula a tabela Appointment lendo src/main/resources/Appointment.txt (CSV delimitado por ;)
  */
 @Component
 @RequiredArgsConstructor
 @Profile("bootstrap")
-@Order(6)      // corre depois do PhysicianBootstrapper (que tem @Order(5))
+@Order(6)
 public class AppointmentBootstrapper implements CommandLineRunner {
 
+    // CAMPO FINAL INJETADO PELO CONSTRUTOR (@RequiredArgsConstructor)
     private final AppointmentRepository appointmentRepo;
+
+
+    @Autowired
+    @Qualifier("restTemplateWithAuth")
+    private RestTemplate restTemplate;
+
+    @Value("${patient.port}")
+    private int patientPort;
+
+    @Value("${physician.port}")
+    private int physicianPort;
+
+    @Value("${PATIENT_SERVICE_URL}")
+    private String url_patient;
+
+    @Value("${PHYSICIAN_SERVICE_URL}")
+    private String url_physician;
+    // ⬆️ FIM DA CORREÇÃO DE INJEÇÃO
 
     private LocalDateTime parseDateOrNull(String text) {
         if (text == null || text.isBlank() || text.equalsIgnoreCase("null")) {
@@ -38,17 +57,14 @@ public class AppointmentBootstrapper implements CommandLineRunner {
         return LocalDateTime.parse(text);
     }
 
-    @Autowired
-    @Qualifier("restTemplateWithAuth")
-    private RestTemplate restTemplate;
-
-
-    private final String PHYSICIAN_SERVICE_URL = "http://localhost:8082/api/physicians";
-
-    private final String PATIENT_SERVICE_URL = "http://localhost:8099/api/patients";
-
     @Override
     public void run(String... args) throws Exception {
+
+
+        if (appointmentRepo.count() > 0) {
+            System.out.println("Appointment Bootstrapper: Dados de agendamento já existem. Ignorando inserção.");
+            return;
+        }
 
         try (BufferedReader reader =
                      Files.newBufferedReader(Paths.get("src/main/resources/Appointment.txt"))) {
@@ -77,10 +93,12 @@ public class AppointmentBootstrapper implements CommandLineRunner {
                 LocalDateTime start = parseDateOrNull(f[5].trim()); // <- protegido
                 LocalDateTime end = parseDateOrNull(f[6].trim());   // <- protegido
 
-                Optional<Appointment> existing = appointmentRepo.findByPatientIdAndPhysicianNumberAndDateTime(patientNumber, physicianNumber, dt);
-                Appointment a = existing.orElseGet(() -> new Appointment(dt, ct, st, patientNumber, physicianNumber));
+                // Cria novo Appointment (não procura existente, pois verificamos que a tabela está vazia)
+                Appointment a = new Appointment(dt, ct, st, patientNumber, physicianNumber);
                 a.setStartTime(start);
                 a.setEndTime(end);
+
+                // Atribui o AppointmentNumber incremental
                 a.setAppointmentNumber(new AppointmentNumber("APPT-" + counter++));
                 appointmentRepo.save(a);
             }

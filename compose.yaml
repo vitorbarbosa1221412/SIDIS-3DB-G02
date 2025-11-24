@@ -1,0 +1,33 @@
+services:
+  appointment_service1:
+    build: AppointmentService
+    ports:
+      - "4000:4000"
+  appointment_service2:
+    build: AppointmentService
+    ports:
+      - "4001:4001"
+  patient_service1:
+    build: PatientService
+    ports:
+      - "3000:3000"
+  patient_service2:
+    build: PatientService
+    ports:
+      - "3001:3001"
+  physician_service1:
+    build: PhysicianService
+    ports:
+      - "5000:5000"
+  physician_service2:
+    build: PhysicianService
+    ports:
+      - "5001:5001"
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: UoU4CrIoGNgOtK31
+      postgres-data: /home/asus/IdeaProjects/SIDIS-25-26/dockerData

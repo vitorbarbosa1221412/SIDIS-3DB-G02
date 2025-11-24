@@ -5,8 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a2ba91f6-455b-4a18-9e93-4871a6df7699" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../AppointmentService/.run/AppointmentService-2.run.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../AppointmentService/.run/Psoft251221392121168612208061211104Application.run.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../AppointmentService/.run/AppointmentService-1.run.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../AppointmentService/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PatientService/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PhysicianService/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AppointmentService/mvnw" beforeDir="false" afterPath="$PROJECT_DIR$/../AppointmentService/mvnw" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AppointmentService/src/main/java/com/example/psoft25_1221392_1211686_1220806_1211104/bootstrapping/AppointmentBootstrapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/../AppointmentService/src/main/java/com/example/psoft25_1221392_1211686_1220806_1211104/bootstrapping/AppointmentBootstrapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../AppointmentService/src/main/java/com/example/psoft25_1221392_1211686_1220806_1211104/bootstrapping/AppointmentRecordsBootstrapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/../AppointmentService/src/main/java/com/example/psoft25_1221392_1211686_1220806_1211104/bootstrapping/AppointmentRecordsBootstrapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../PatientService/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../PatientService/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../PatientService/src/test/java/com/example/psoft25_1221392_1211686_1220806_1211104/patientmanagement/model/NameTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../PatientService/src/test/java/com/example/psoft25_1221392_1211686_1220806_1211104/patientmanagement/model/NameTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../PhysicianService/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../PhysicianService/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../PhysicianService/src/test/java/com/example/psoft25_1221392_1211686_1220806_1211104/PatientClientIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../PhysicianService/src/test/java/com/example/psoft25_1221392_1211686_1220806_1211104/PatientClientIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../PhysicianService/src/test/java/com/example/psoft25_1221392_1211686_1220806_1211104/physicianmanagement/PatientClientIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../PhysicianService/src/test/java/com/example/psoft25_1221392_1211686_1220806_1211104/physicianmanagement/PatientClientIntegrationTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,6 +102,7 @@
       <workItem from="1761993634218" duration="1372000" />
       <workItem from="1762009252631" duration="3654000" />
       <workItem from="1762103044068" duration="3704000" />
+      <workItem from="1762773141277" duration="634000" />
     </task>
     <servers />
   </component>

@@ -1,5 +1,23 @@
 FROM eclipse-temurin:17-jdk-alpine
+
 WORKDIR /app
-COPY target/psoft25_1221392_1211686_1220806_1211104-0.0.1-SNAPSHOT.jar app.jar
+
+# Copy Maven wrapper and pom.xml
+COPY mvnw .
+COPY mvnw.cmd .
+COPY .mvn .mvn
+COPY pom.xml .
+
+# Download dependencies
+RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY src ./src
+
+# Build the application
+RUN ./mvnw clean package -DskipTests
+
+# Run the application
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+ENTRYPOINT ["java", "-jar", "target/AppointmentService-0.0.1-SNAPSHOT.jar"]

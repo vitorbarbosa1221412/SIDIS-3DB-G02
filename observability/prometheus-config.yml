@@ -1,0 +1,37 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Patient Service Metrics
+  - job_name: "patient_service"
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true  # Patient Service uses self-signed certs inside cluster
+    metrics_path: "/internal/prometheus"  # Spring Boot Actuator endpoint
+    static_configs:
+      - targets: 
+          - "patient-service-1:3000"  # Patient Service Instance 1
+          - "patient-service-2:3001"  # Patient Service Instance 2
+        labels:
+          service: "patient-service"
+
+  # Appointment Service Metrics
+  - job_name: "appointment_service"
+    metrics_path: "/internal/prometheus"  # Spring Boot Actuator endpoint
+    static_configs:
+      - targets: 
+          - "appointment-service-1:4000"  # Appointment Service Instance 1
+          - "appointment-service-2:4001"  # Appointment Service Instance 2
+        labels:
+          service: "appointment-service"
+
+  # Physician Service Metrics
+  - job_name: "physician_service"
+    metrics_path: "/internal/prometheus"  # Spring Boot Actuator endpoint
+    static_configs:
+      - targets: 
+          - "physician-service-1:5000"  # Physician Service Instance 1
+          - "physician-service-2:5001"  # Physician Service Instance 2
+        labels:
+          service: "physician-service"

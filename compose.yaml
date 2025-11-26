@@ -1,33 +1,327 @@
+version: "3.9"
+
 services:
-  appointment_service1:
-    build: AppointmentService
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: sidis-rabbitmq
     ports:
-      - "4000:4000"
-  appointment_service2:
-    build: AppointmentService
-    ports:
-      - "4001:4001"
-  patient_service1:
-    build: PatientService
-    ports:
-      - "3000:3000"
-  patient_service2:
-    build: PatientService
-    ports:
-      - "3001:3001"
-  physician_service1:
-    build: PhysicianService
-    ports:
-      - "5000:5000"
-  physician_service2:
-    build: PhysicianService
-    ports:
-      - "5001:5001"
-  db:
-    image: postgres
-    ports:
-      - "5432:5432"
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sidis-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: sidis-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: UoU4CrIoGNgOtK31
-      postgres-data: /home/asus/IdeaProjects/SIDIS-25-26/dockerData
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sidis-network
+
+  patient-service-1:
+    build:
+      context: ./PatientService
+      dockerfile: Dockerfile
+    container_name: patient-service-1
+    environment:
+      SPRING_PROFILES_ACTIVE: bootstrap
+      INSTANCE_ID: patient-service-1
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SERVER_PORT: 3000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./logs/patient-service:/var/log/sidis/patient-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  patient-service-2:
+    build:
+      context: ./PatientService
+      dockerfile: Dockerfile
+    container_name: patient-service-2
+    environment:
+      SPRING_PROFILES_ACTIVE: bootstrap
+      INSTANCE_ID: patient-service-2
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SERVER_PORT: 3001
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./logs/patient-service:/var/log/sidis/patient-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  appointment-service-1:
+    build:
+      context: ./AppointmentService
+      dockerfile: Dockerfile
+    container_name: appointment-service-1
+    environment:
+      SPRING_PROFILES_ACTIVE: bootstrap
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_appointments_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SERVER_PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./logs/appointment-service:/var/log/sidis/appointment-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sidis-network
+
+  appointment-service-2:
+    build:
+      context: ./AppointmentService
+      dockerfile: Dockerfile
+    container_name: appointment-service-2
+    environment:
+      SPRING_PROFILES_ACTIVE: bootstrap
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_appointments_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SERVER_PORT: 4001
+    ports:
+      - "4001:4001"
+    volumes:
+      - ./logs/appointment-service:/var/log/sidis/appointment-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sidis-network
+
+  physician-service-1:
+    build:
+      context: ./PhysicianService
+      dockerfile: Dockerfile
+    container_name: physician-service-1
+    environment:
+      SPRING_PROFILES_ACTIVE: bootstrap
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SERVER_PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs/physician-service:/var/log/sidis/physician-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sidis-network
+
+  physician-service-2:
+    build:
+      context: ./PhysicianService
+      dockerfile: Dockerfile
+    container_name: physician-service-2
+    environment:
+      SPRING_PROFILES_ACTIVE: bootstrap
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SERVER_PORT: 5001
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./logs/physician-service:/var/log/sidis/physician-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sidis-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: sidis-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - appointment-service-1
+      - appointment-service-2
+      - physician-service-1
+      - physician-service-2
+      - patient-service-1
+      - patient-service-2
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.4
+    container_name: sidis-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki-config.yaml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: sidis-tempo
+    user: "1000"
+    ports:
+      - "3200:3200"
+      - "4318:4318"
+    volumes:
+      - ./observability/tempo-config.yaml:/etc/tempo.yaml:ro
+      - ./traces:/tmp/tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sidis-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus-config.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: sidis-alloy
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./observability/alloy-config.alloy:/etc/alloy/config.alloy:ro
+      - ./logs:/var/log/sidis:ro
+
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    depends_on:
+      - loki
+      - prometheus
+    networks:
+      - sidis-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sidis-grafana
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    networks:
+      - sidis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  sidis-network:
+    driver: bridge

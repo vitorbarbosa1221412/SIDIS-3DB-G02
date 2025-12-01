@@ -1,0 +1,62 @@
+@startuml SagaChoreography
+
+title Padrão Saga: Coreografia de Agendamento e Compensação
+
+actor User
+participant APPGW as "API Gateway"
+participant AppSvc as "Appointment Service"
+participant PatientSvc as "Patient Service"
+participant PhysicianSvc as "Physician Service"
+queue Broker as "RabbitMQ Exchange"
+
+User -> APPGW : POST /appointments (Agendar)
+APPGW -> AppSvc : AgendarConsultaCommand
+
+note over AppSvc
+Transação Local:
+1. Cria Agendamento (Status: PENDING)
+2. Publica Evento
+end note
+AppSvc -> Broker : Publica: **AppointmentRequestedEvent**
+
+group Fluxo de Sucesso
+    Broker -> PatientSvc : Consome Evento
+    PatientSvc -> PatientSvc : Transação Local: Notificar Paciente (Commit)
+    PatientSvc -> Broker : Publica: PatientNotifiedEvent
+
+    Broker -> PhysicianSvc : Consome Evento
+    note over PhysicianSvc
+        Transação Local:
+        1. Verifica e Reserva Horário (Commit)
+        2. Publica Evento
+    end note
+    PhysicianSvc -> Broker : Publica: **PhysicianSlotReservedEvent**
+
+    Broker -> AppSvc : Consome Evento de Sucesso
+    AppSvc -> AppSvc : Transação de Finalização (Status: SCHEDULED)
+end
+
+AppSvc --> User : 200 OK (Agendado)
+
+group **Fluxo de Falha (Compensação)**
+    Broker -> PhysicianSvc : Consome Evento: AppointmentRequestedEvent
+    note over PhysicianSvc
+        **FALHA NA REGRAS DE NEGÓCIO**
+        (Ex: Horário Ocupado)
+        - Rollback da transação local
+    end note
+    PhysicianSvc -> Broker : Publica: **PhysicianSlotReservationFailedEvent**
+
+    Broker -> AppSvc : Consome Evento de Falha
+    note over AppSvc
+        **Transação de Compensação:**
+        1. Atualiza Agendamento (Status: CANCELLED)
+        2. Publica Evento de Compensação
+    end note
+    AppSvc -> Broker : Publica: AppointmentCanceledEvent
+
+    Broker -> PatientSvc : Consome Evento de Compensação
+    PatientSvc -> PatientSvc : Transação de Compensação: Envia Notificação de Cancelamento
+end
+
+@enduml

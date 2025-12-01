@@ -1,0 +1,66 @@
+@startuml ArchitectureContextMap
+' Define custom styling for consistency and readability
+skinparam defaultTextAlignment center
+skinparam componentStyle uml2
+skinparam databaseBackgroundColor #LightSkyBlue
+skinparam queueBackgroundColor #DarkSeaGreen
+skinparam rectangle {
+    BackgroundColor White
+    BorderColor #1D70B8
+    FontColor Black
+    StereotypeFontColor #1D70B8
+    Shadowing true
+}
+
+
+' 1. MAIN SYSTEM BOUNDARY
+rectangle "Healthcare Appointment Platform (HAP)" <<System>> as HAP_SYSTEM {
+
+    rectangle "API Gateway / Load Balancer" as APPGW <<Nginx>>
+
+    ' 2. APPLICATION SERVICES (Bounded Contexts)
+    rectangle "Appointment Service" as SVC_A <<Spring Boot x2>> {
+        ' Internal structure detail
+        rectangle "Appointment Controller" as CTRL_A
+        rectangle "Appointment Service" as SRV_A
+        CTRL_A --> SRV_A : Uses
+    }
+
+    rectangle "Physician Service" as SVC_P <<Spring Boot x2>> {
+        rectangle "Physician Controller" as CTRL_P
+        rectangle "Physician Service" as SRV_P
+        CTRL_P --> SRV_P : Uses
+    }
+
+    rectangle "Patient Service" as SVC_T <<Spring Boot x2>> {
+        rectangle "Patient Controller" as CTRL_T
+        rectangle "Patient Service" as SRV_T
+        CTRL_T --> SRV_T : Uses
+    }
+
+    ' 3. INFRASTRUCTURE
+    queue "RabbitMQ" as BROKER <<Message Broker (AMQP)>>
+
+    rectangle "Persistence Layer (Database-per-Service)" as DB_LAYER {
+        database "DB Physician" as DB_P <<PostgreSQL>>
+        database "DB Appointment" as DB_A <<PostgreSQL>>
+        database "DB Patient" as DB_T <<PostgreSQL/MongoDB>>
+    }
+}
+
+' External Traffic Relations (HTTPS)
+APPGW --> SVC_A : "REST Traffic (HTTPS)"
+APPGW --> SVC_P : "REST Traffic (HTTPS)"
+APPGW --> SVC_T : "REST Traffic (HTTPS)"
+
+' Asynchronous Relations (Saga Choreography)
+SVC_A -> BROKER : "Publishes Events (Ex: ApptRequested)"
+BROKER -> SVC_P : "Consumes Events (Slot Reservation)"
+BROKER -> SVC_T : "Consumes Events (Notification)"
+
+' Persistence Relations
+SRV_P --> DB_P : "Reads/Writes"
+SRV_A --> DB_A : "Reads/Writes"
+SRV_T --> DB_T : "Reads/Writes"
+
+@enduml

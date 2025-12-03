@@ -14,7 +14,7 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>psoft25_1221392_1211686_1220806_1211104</artifactId>
+    <artifactId>PhysicianService</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>psoft25_1221392_1211686_1220806_1211104</name>
     <description>Projeto PSoft 25</description>

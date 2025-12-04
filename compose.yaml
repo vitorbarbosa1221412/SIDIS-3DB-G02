@@ -39,6 +39,23 @@ services:
     networks:
       - sidis-network
 
+  mongodb:
+      image: mongo:latest
+      container_name: sidis-mongodb
+      ports:
+        - "27017:27017"
+      volumes:
+        - mongodb_data:/data/db
+      networks:
+        - sidis-network
+      healthcheck:
+        test: [ "CMD", "mongosh", "--eval", "db.runCommand('ping').ok" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      restart: unless-stopped
+
+
   patient-service-1:
     build:
       context: ./PatientService
@@ -157,13 +174,26 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SPRING_DATA_MONGODB_HOST: mongodb
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: hap_physicians_read
       SERVER_PORT: 5000
+
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
     ports:
       - "5000:5000"
     volumes:
       - ./logs/physician-service:/var/log/sidis/physician-service
     depends_on:
       postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - sidis-network
@@ -321,6 +351,7 @@ volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  mongodb_data:
 
 networks:
   sidis-network:

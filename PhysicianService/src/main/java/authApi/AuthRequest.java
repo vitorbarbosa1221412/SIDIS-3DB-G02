@@ -1,4 +1,4 @@
-package com.example.psoft25_1221392_1211686_1220806_1211104.auth.api;
+package authApi;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;

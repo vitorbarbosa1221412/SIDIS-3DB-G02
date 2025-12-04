@@ -1,4 +1,4 @@
-package com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.infrastructure.repositories.impl;
+package com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.infrastructure;
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.exceptions.NotFoundException;
 import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.Physician;

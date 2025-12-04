@@ -1,5 +1,7 @@
 # SIDIS-3DB-G02
 
+The main goal of this project is to turn the monolithic HAP project in a distributed system.
+
 ## Deployment Instructions
 To deploy the HAP project, the user most have the following software and configurations in their system.
 
@@ -10,9 +12,25 @@ The system most have nginx installed and nginx.config file most have the ports o
 PostgreSQl most be installed in the system and it needs to have a user named "posgres" with the password being "UoU4CrIoGNgOtK31" and the following databases created: "sidis_appointments_db"; "sidis_patients_db"; "sidis_physicians_db".
 
 ## Architectural Decisions
+
+### Domain-driven segregation
+
+
+
+### Load Balancing
+
 We decided to use nginx for the load balancing of the instances of a respective service, one of the reasons for that necessity is the fact that all the instances of the same service share the repository, so we want to make sure that none of the instances got overloaded.
 
+### Databases Engine
+
 PostgreSQL was our choice for the database, it's open source and for our project it fit perfectly to have a shared databases between services.
+
+## CQRS Pattern
+
+We used the CQRS pattern only for the Physician Service. We decided that it was the best fit because the difference between read and write uses was significant, the number of times that it's need to consult a physician is greater than the times that a physician is added or dismissed.
+For the appointment and patient services, we decided that using CQRS was unnecessary because the difference between write and read wasnt that great, and it would add more complexity to the system.
+
+## Saga Pattern
 
 # Autoavaliação
 ### 1221412 - Vítor Barbosa

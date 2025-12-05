@@ -1,62 +1,79 @@
 @startuml SagaChoreography
 
-title Padrão Saga: Coreografia de Agendamento e Compensação
+title US Appointment Schedule
 
-actor User
-participant APPGW as "API Gateway"
-participant AppSvc as "Appointment Service"
+actor Patient
+
+participant Gateway as "API Gateway"
+participant AppointSvc as "Appointment Service (Instance X)"
+box "Appointment Service"
+participant AppointSvc_Controller as "Appointment Service Controller"
+participant AppointSvc_Service as "Appointment Service Service"
+participant AppointSvc_Repository as "Appointment Service Repository"
+end box
 participant PatientSvc as "Patient Service"
 participant PhysicianSvc as "Physician Service"
-queue Broker as "RabbitMQ Exchange"
 
-User -> APPGW : POST /appointments (Agendar)
-APPGW -> AppSvc : AgendarConsultaCommand
+Patient -> Gateway : Asks to schedule appointment
+activate Patient
+activate Gateway
+Gateway -> AppointSvc : POST api/appointments/scheduleAppointment \n Headers(Bearer Token) \n Json Body(physicianNumber, dateTime, consultationType)
+activate AppointSvc
+AppointSvc -> AppointSvc_Controller : scheduleAppointment(request)
+activate AppointSvc_Controller
+AppointSvc_Controller -> AppointSvc_Service : scheduleAppointmentByPatient(physicianNumber,\ndateTime, consultationType)
+activate AppointSvc_Service
+AppointSvc_Service -> PatientSvc : restTemplate.getForObject(getPatientUrl, String.class);
 
-note over AppSvc
-Transação Local:
-1. Cria Agendamento (Status: PENDING)
-2. Publica Evento
+note left
+    Synchronous Call Using HTTP
+    instead of asynchronous because we
+    need the data before the end
+    of the schedule operation
 end note
-AppSvc -> Broker : Publica: **AppointmentRequestedEvent**
 
-group Fluxo de Sucesso
-    Broker -> PatientSvc : Consome Evento
-    PatientSvc -> PatientSvc : Transação Local: Notificar Paciente (Commit)
-    PatientSvc -> Broker : Publica: PatientNotifiedEvent
+activate PatientSvc
+PatientSvc --> AppointSvc_Service : returns(patient)
+deactivate PatientSvc
 
-    Broker -> PhysicianSvc : Consome Evento
-    note over PhysicianSvc
-        Transação Local:
-        1. Verifica e Reserva Horário (Commit)
-        2. Publica Evento
-    end note
-    PhysicianSvc -> Broker : Publica: **PhysicianSlotReservedEvent**
-
-    Broker -> AppSvc : Consome Evento de Sucesso
-    AppSvc -> AppSvc : Transação de Finalização (Status: SCHEDULED)
+alt patient service doesn't respond with valid patient
+AppointSvc_Service --> AppointSvc_Controller : error checking if patient exists
+AppointSvc_Controller --> AppointSvc : error checking if patient exists
+AppointSvc --> Gateway : error checking if patient exists
+Gateway --> Patient : unable to schedule appointment
 end
 
-AppSvc --> User : 200 OK (Agendado)
+AppointSvc_Service -> PhysicianSvc : restTemplate.getForObject(getPhysicianUrl, String.class);
 
-group **Fluxo de Falha (Compensação)**
-    Broker -> PhysicianSvc : Consome Evento: AppointmentRequestedEvent
-    note over PhysicianSvc
-        **FALHA NA REGRAS DE NEGÓCIO**
-        (Ex: Horário Ocupado)
-        - Rollback da transação local
-    end note
-    PhysicianSvc -> Broker : Publica: **PhysicianSlotReservationFailedEvent**
+note left
+    Synchronous Call Using HTTP
+    instead of asynchronous because we
+    need the data before the end
+    of the schedule operation
+end note
 
-    Broker -> AppSvc : Consome Evento de Falha
-    note over AppSvc
-        **Transação de Compensação:**
-        1. Atualiza Agendamento (Status: CANCELLED)
-        2. Publica Evento de Compensação
-    end note
-    AppSvc -> Broker : Publica: AppointmentCanceledEvent
+activate PhysicianSvc
+PhysicianSvc --> AppointSvc_Service : returns(physician)
+deactivate PhysicianSvc
 
-    Broker -> PatientSvc : Consome Evento de Compensação
-    PatientSvc -> PatientSvc : Transação de Compensação: Envia Notificação de Cancelamento
+alt physician service doesn't respond with valid physician
+AppointSvc_Service --> AppointSvc_Controller : error checking if physician exists
+AppointSvc_Controller --> AppointSvc : error checking if physician exists
+AppointSvc --> Gateway : error checking if physician exists
+Gateway --> Patient : unable to schedule appointment
 end
+
+AppointSvc_Service -> AppointSvc_Repository : save(appointment)
+activate AppointSvc_Repository
+AppointSvc_Repository --> AppointSvc_Service : created
+deactivate AppointSvc_Repository
+AppointSvc_Service --> AppointSvc_Controller : created
+deactivate AppointSvc_Service
+AppointSvc_Controller --> AppointSvc : created
+deactivate AppointSvc_Controller
+AppointSvc --> Gateway : created
+deactivate Gateway
+Gateway --> Patient : created
+deactivate Patient
 
 @enduml

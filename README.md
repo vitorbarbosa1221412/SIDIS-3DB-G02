@@ -19,7 +19,7 @@ PostgreSQl most be installed in the system and it needs to have a user named "po
 
 ### Load Balancing
 
-We decided to use nginx for the load balancing of the instances of a respective service, one of the reasons for that necessity is the fact that all the instances of the same service share the repository, so we want to make sure that none of the instances got overloaded.
+We decided to use nginx for the load balancing of the instances of a respective service, one of the reasons for that necessity is the fact that all the instances of the same service share the repository, so we want to make sure that none of the instances got overloaded. For more info [see doc](./docs/2/API_GATEWAY_DOCUMENTATION.md)
 
 ### Databases Engine
 
@@ -31,6 +31,10 @@ We used the CQRS pattern only for the Physician Service. We decided that it was 
 For the appointment and patient services, we decided that using CQRS was unnecessary because the difference between write and read wasnt that great, and it would add more complexity to the system.
 
 ## Saga Pattern
+
+### OBSERVABILITY
+
+We use grafana labs solution for observability(Alloy, Loki and Tempo) and Prometheus. Access http://localhost:3030/ to see the dashboard, for more info see [Doc](./docs/Observability/OBSERVABILITY_EXPLANATION.md).
 
 # Autoavaliação
 ### 1221412 - Vítor Barbosa

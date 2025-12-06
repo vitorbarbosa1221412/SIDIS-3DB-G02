@@ -1,0 +1,83 @@
+@startuml
+' US-GetPatientById Microservices: Get Patient by ID (via API Gateway)
+
+title US-GetPatientById: As a User, I want to get a patient's profile by ID (Microservices via API Gateway)
+
+actor User
+participant APIClient as "API Client\n(Web/Mobile)"
+participant APIGateway as "API Gateway\n(Nginx:8080)"
+participant PatientService as "Patient Service\n(HTTPS:3000/3001)"
+participant PatientController as "Patient Controller"
+participant PatientQueryService as "Patient Query Service\n(CQRS Query Side)"
+participant PatientRepository as "Patient Repository"
+participant PatientDB as "Patient Database"
+
+autonumber
+
+' Request entry through API Gateway
+User -> APIClient : Request patient profile by ID
+APIClient -> APIGateway : GET http://localhost:8080/api/patients/id/{id}/profile
+activate APIGateway
+
+note right of APIGateway
+  Load balancing:
+  - Routes to patient-service-1:3000 or patient-service-2:3001
+  - Preserves full URI path
+end note
+
+APIGateway -> PatientService : GET https://patient-service-X:300X/api/patients/id/{id}/profile
+activate PatientService
+
+PatientService -> PatientController : getPatientById(id)
+activate PatientController
+
+note right of PatientController
+  CQRS Pattern:
+  - Uses QueryService for read operations
+  - Maps Patient entity to PatientView DTO
+end note
+
+PatientController -> PatientQueryService : getPatientById(id)
+activate PatientQueryService
+
+PatientQueryService -> PatientRepository : findById(id)
+activate PatientRepository
+
+PatientRepository -> PatientDB : SELECT * FROM patients WHERE id = ? AND enabled = true
+activate PatientDB
+
+PatientDB --> PatientRepository : Optional<Patient>
+deactivate PatientDB
+
+alt Patient not found or disabled
+  PatientRepository --> PatientQueryService : Optional.empty()
+  PatientQueryService --> PatientController : ResponseEntity.notFound()
+  PatientController --> PatientService : HTTP 404 Not Found
+  PatientService --> APIGateway : 404 Not Found
+  APIGateway --> APIClient : 404 Not Found
+  APIClient --> User : Show error message
+  deactivate PatientRepository
+  deactivate PatientQueryService
+  deactivate PatientController
+  deactivate PatientService
+  deactivate APIGateway
+  return
+else Patient found and enabled
+  PatientRepository --> PatientQueryService : Optional<Patient>
+  deactivate PatientRepository
+  
+  PatientQueryService --> PatientController : ResponseEntity.ok(Patient)
+  deactivate PatientQueryService
+  
+  PatientController -> PatientController : mapper.toPatientView(patient)
+  PatientController --> PatientService : HTTP 200 OK + PatientView
+  PatientService --> APIGateway : 200 OK + PatientView
+  APIGateway --> APIClient : 200 OK + PatientView
+  APIClient --> User : Display patient profile
+  deactivate PatientController
+  deactivate PatientService
+  deactivate APIGateway
+end
+
+@enduml
+

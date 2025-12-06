@@ -1,0 +1,170 @@
+@startuml
+' US-CreatePatient Microservices: Create Patient (via API Gateway)
+
+title US-CreatePatient: As a User, I want to create a new patient account
+
+actor User
+participant APIClient as "API Client\n(Web/Mobile)"
+participant APIGateway as "API Gateway\n(Nginx:8080)"
+participant PatientService as "Patient Service\n(HTTPS:3000/3001)"
+participant PatientController as "Patient Controller"
+participant PatientCommandService as "Patient Command Service\n(CQRS Command Side)"
+participant PatientRepository as "Patient Repository"
+participant UserRepository as "User Repository"
+participant PatientDB as "Patient Database"
+participant UserDB as "User Database"
+participant EventPublisher as "Event Publisher\n(RabbitMQ)"
+
+autonumber
+
+' Request entry through API Gateway
+User -> APIClient : Submit patient registration form
+APIClient -> APIGateway : POST http://localhost:8080/api/patients/json\n(application/json: CreatePatientRequest)
+activate APIGateway
+
+note right of APIGateway
+  Load balancing:
+  - Routes to patient-service-1:3000 or patient-service-2:3001
+  - Uses HTTPS with SSL verification disabled
+  - Preserves full URI path
+end note
+
+APIGateway -> PatientService : POST https://patient-service-X:300X/api/patients/json\n(application/json)
+activate PatientService
+
+PatientService -> PatientController : createPatientJson(CreatePatientRequest)
+activate PatientController
+
+note right of PatientController
+  CQRS Pattern:
+  - Uses CommandService for write operations
+  - Receives JSON directly (no multipart parsing)
+  - Maps to CreatePatientRequest
+end note
+
+PatientController -> PatientCommandService : createPatient(request)
+activate PatientCommandService
+
+note right of PatientCommandService
+  Validation steps:
+  1) Check email uniqueness
+  2) Validate password match
+  3) Validate password strength
+  4) Generate patient number
+  5) Create user account
+  6) Save patient
+  7) Publish event
+end note
+
+' 1) Check email uniqueness
+PatientCommandService -> PatientRepository : findByEmailAddress(email)
+activate PatientRepository
+PatientRepository -> PatientDB : SELECT * FROM patients WHERE email_address = ?
+activate PatientDB
+PatientDB --> PatientRepository : Optional<Patient>
+deactivate PatientDB
+PatientRepository --> PatientCommandService : Optional<Patient>
+deactivate PatientRepository
+
+alt Email already exists
+  PatientCommandService --> PatientController : ConflictException("Email already exists")
+  PatientController --> PatientService : HTTP 409 Conflict
+  PatientService --> APIGateway : 409 Conflict
+  APIGateway --> APIClient : 409 Conflict
+  APIClient --> User : Show error: Email already registered
+  deactivate PatientCommandService
+  deactivate PatientController
+  deactivate PatientService
+  deactivate APIGateway
+  return
+end
+
+' 2) Validate password match
+PatientCommandService -> PatientCommandService : validate password match
+
+alt Passwords don't match
+  PatientCommandService --> PatientController : ValidationException("Passwords don't match")
+  PatientController --> PatientService : HTTP 400 Bad Request
+  PatientService --> APIGateway : 400 Bad Request
+  APIGateway --> APIClient : 400 Bad Request
+  APIClient --> User : Show error: Passwords don't match
+  deactivate PatientCommandService
+  deactivate PatientController
+  deactivate PatientService
+  deactivate APIGateway
+  return
+end
+
+' 3) Validate password strength
+PatientCommandService -> PatientCommandService : validate password strength
+
+alt Password invalid
+  PatientCommandService --> PatientController : ValidationException("Password invalid")
+  PatientController --> PatientService : HTTP 400 Bad Request
+  PatientService --> APIGateway : 400 Bad Request
+  APIGateway --> APIClient : 400 Bad Request
+  APIClient --> User : Show error: Password requirements not met
+  deactivate PatientCommandService
+  deactivate PatientController
+  deactivate PatientService
+  deactivate APIGateway
+  return
+end
+
+' 4) Create Patient entity and generate patient number
+PatientCommandService -> PatientCommandService : mapper.create(request)
+PatientCommandService -> PatientRepository : getNextPatientNumber()
+activate PatientRepository
+PatientRepository -> PatientDB : SELECT MAX(patient_number) FROM patients
+PatientDB --> PatientRepository : maxNumber
+PatientRepository --> PatientCommandService : nextNumber
+deactivate PatientRepository
+PatientCommandService -> PatientCommandService : generate patientNumber
+
+' 5) Create User account
+PatientCommandService -> UserRepository : save(User.newUser(...))
+activate UserRepository
+UserRepository -> UserDB : INSERT INTO users (username, password, name, role)
+activate UserDB
+UserDB --> UserRepository : savedUser
+UserRepository --> PatientCommandService : User
+deactivate UserRepository
+deactivate UserDB
+
+PatientCommandService -> PatientCommandService : patient.setUser(user)
+
+' 6) Save Patient
+PatientCommandService -> PatientRepository : save(patient)
+activate PatientRepository
+PatientRepository -> PatientDB : INSERT INTO patients (...)
+PatientDB --> PatientRepository : savedPatient
+PatientRepository --> PatientCommandService : Patient
+deactivate PatientRepository
+
+' 7) Publish PatientCreatedEvent (CQRS - Event-Driven)
+PatientCommandService -> EventPublisher : publishPatientCreated(event)
+activate EventPublisher
+note right of EventPublisher
+  Asynchronous event:
+  - PatientCreatedEvent published to RabbitMQ
+  - Other services can subscribe
+  - Enables eventual consistency
+end note
+EventPublisher --> PatientCommandService : Event published
+deactivate EventPublisher
+
+PatientCommandService --> PatientController : Patient
+deactivate PatientCommandService
+
+PatientController -> PatientController : mapper.toPatientView(patient)
+PatientController --> PatientService : HTTP 201 Created + PatientView
+PatientService --> APIGateway : 201 Created + PatientView
+APIGateway --> APIClient : 201 Created + PatientView
+APIClient --> User : Show success: Patient account created
+
+deactivate PatientController
+deactivate PatientService
+deactivate APIGateway
+
+@enduml
+

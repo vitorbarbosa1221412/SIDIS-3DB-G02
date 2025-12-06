@@ -22,5 +22,6 @@ public class PatientCreatedEvent implements Serializable {
     private String emailAddress;
     private String name;
     private LocalDateTime timestamp;
+    private String instanceId; // ID of the instance that published this event
 }
 

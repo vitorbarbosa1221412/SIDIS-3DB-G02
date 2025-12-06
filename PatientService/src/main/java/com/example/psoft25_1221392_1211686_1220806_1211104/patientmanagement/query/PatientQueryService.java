@@ -3,6 +3,7 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.qu
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.repositories.PatientRepository;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.services.Page;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.services.PatientPeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.util.Optional;
 /**
  * Query Service - Handles all read operations (CQRS Query Side)
  * Uses the existing Patient model and PatientRepository
+ * Implements read-through fallback: if not found locally, query peer instances
  * This separation allows for optimized read operations and eventual consistency
  */
 @Slf4j
@@ -22,9 +24,16 @@ import java.util.Optional;
 public class PatientQueryService {
 
     private final PatientRepository patientRepository;
+    private final PatientPeerService patientPeerService;
 
     public ResponseEntity<Patient> getPatientById(Long id) {
         Optional<Patient> patient = patientRepository.findById(id);
+        
+        if (patient.isEmpty()) {
+            log.debug("Patient with id {} not found locally, trying peer instances", id);
+            patient = patientPeerService.findPatientWithFallback(id, null);
+        }
+        
         if (patient.isEmpty() || !patient.get().isEnabled()) {
             return ResponseEntity.notFound().build();
         }
@@ -36,7 +45,14 @@ public class PatientQueryService {
             return ResponseEntity.badRequest().build();
         }
 
-        Optional<Patient> patient = patientRepository.findByPatientNumber(number.trim());
+        String trimmedNumber = number.trim();
+        Optional<Patient> patient = patientRepository.findByPatientNumber(trimmedNumber);
+        
+        if (patient.isEmpty()) {
+            log.debug("Patient {} not found locally, trying peer instances", trimmedNumber);
+            patient = patientPeerService.findPatientWithFallback(null, trimmedNumber);
+        }
+        
         if (patient.isEmpty() || !patient.get().isEnabled()) {
             return ResponseEntity.notFound().build();
         }
@@ -56,6 +72,33 @@ public class PatientQueryService {
 
     public Optional<Patient> findByEmailAddress(String emailAddress) {
         return patientRepository.findByEmailAddress(emailAddress);
+    }
+
+    /**
+     * Get patient by ID from local database only (no fallback to peers)
+     * Used by internal replication endpoints
+     */
+    public ResponseEntity<Patient> getPatientByIdLocalOnly(Long id) {
+        Optional<Patient> patient = patientRepository.findById(id);
+        if (patient.isEmpty() || !patient.get().isEnabled()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(patient.get());
+    }
+
+    /**
+     * Get patient by number from local database only (no fallback to peers)
+     * Used by internal replication endpoints
+     */
+    public ResponseEntity<Patient> getPatientByNumberLocalOnly(String number) {
+        if (number == null || number.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<Patient> patient = patientRepository.findByPatientNumber(number.trim());
+        if (patient.isEmpty() || !patient.get().isEnabled()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(patient.get());
     }
 }
 

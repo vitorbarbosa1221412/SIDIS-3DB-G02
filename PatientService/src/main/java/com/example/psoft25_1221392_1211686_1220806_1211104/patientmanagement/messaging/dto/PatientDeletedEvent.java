@@ -20,5 +20,6 @@ public class PatientDeletedEvent implements Serializable {
     private Long patientId;
     private String patientNumber;
     private LocalDateTime timestamp;
+    private String instanceId; // ID of the instance that published this event
 }
 

@@ -1,12 +1,10 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.api;
 
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.AppointmentDTO;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.client.dto.PhysicianDTO;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.command.PatientCommandService;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.query.PatientQueryService;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.Patient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.services.*;
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.services.UserService;
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.Role;
-import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.api.UserInternalDTO;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,31 +15,30 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority; // Usar GrantedAuthority
+import org.springframework.security.core.GrantedAuthority;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import java.security.Principal;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Patient Controller - REST API endpoints
+ * Uses CQRS pattern: CommandService for writes, QueryService for reads
+ * External endpoints remain HTTP REST as required
+ */
 @RestController
 @RequestMapping("/api/patients")
 @RequiredArgsConstructor
 public class PatientController {
 
-    private final PatientService patientService;
+    // CQRS: Separate command and query services
+    private final PatientCommandService commandService;
+    private final PatientQueryService queryService;
     private final PatientViewMapper mapper;
-    private final PatientIntegrationService integrationService;
-
-    // NOVO: SERVIÇO DE UTILIZADORES INJETADO
     private final UserService userService;
 
     // =============================================================
@@ -70,19 +67,28 @@ public class PatientController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/internal/replication/{patientNumber}")
+    public ResponseEntity<Patient> getPatientForReplication(@PathVariable String patientNumber) {
+        return queryService.getPatientByNumberLocalOnly(patientNumber);
+    }
 
+    @GetMapping("/internal/replication/id/{id}")
+    public ResponseEntity<Patient> getPatientForReplicationById(@PathVariable Long id) {
+        return queryService.getPatientByIdLocalOnly(id);
+    }
+
+
+    // COMMAND: Create patient (write operation - CQRS)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PatientView> createPatient(
             @RequestPart("patient") String patientJson,
             @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture,
             HttpServletRequest servletRequest) {
 
-        System.out.println("Content-Type recebido: " + servletRequest.getContentType());
-
         CreatePatientRequest request;
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            request = mapper.readValue(patientJson, CreatePatientRequest.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            request = objectMapper.readValue(patientJson, CreatePatientRequest.class);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -91,16 +97,18 @@ public class PatientController {
             request.setProfilePicture(profilePicture);
         }
 
-        Patient patient = patientService.createPatient(request);
+        // Use command service for write operation
+        Patient patient = commandService.createPatient(request);
 
         return new ResponseEntity<>(mapper.toPatientView(patient), HttpStatus.CREATED);
     }
 
     // ... (Restante código do Controller mantido)
 
+    // QUERY: Get all patient IDs (read operation - CQRS)
     @GetMapping("/debug/ids")
     public ResponseEntity<List<Long>> getAllPatientIds() {
-        List<Patient> patients = patientService.getAllPatients();
+        List<Patient> patients = queryService.getAllPatients();
         if (patients == null || patients.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
@@ -110,9 +118,10 @@ public class PatientController {
         return new ResponseEntity<>(ids, HttpStatus.OK);
     }
 
+    // COMMAND: Create patient via JSON (write operation - CQRS)
     @PostMapping(value = "/json", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PatientView> createPatientJson(@Valid @RequestBody CreatePatientRequest request) {
-        Patient patient = patientService.createPatient(request);
+        Patient patient = commandService.createPatient(request);
         return new ResponseEntity<>(mapper.toPatientView(patient), HttpStatus.CREATED);
     }
 
@@ -129,24 +138,27 @@ public class PatientController {
 
 
 
+    // QUERY: Get patient by ID (read operation - CQRS)
     @GetMapping("/id/{id}/profile")
     public ResponseEntity<PatientView> getPatientById(@PathVariable Long id) {
-        ResponseEntity<Patient> response = patientService.getPatientById(id);
+        ResponseEntity<Patient> response = queryService.getPatientById(id);
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             return new ResponseEntity<>(response.getStatusCode());
         }
         return new ResponseEntity<>(mapper.toPatientView(response.getBody()), HttpStatus.OK);
     }
 
+    // QUERY: Get patient by number (read operation - CQRS)
     @GetMapping("/number/{number}")
     public ResponseEntity<PatientView> getPatientByNumber(@PathVariable String number) {
-        ResponseEntity<Patient> response = patientService.getPatientByNumber(number);
+        ResponseEntity<Patient> response = queryService.getPatientByNumber(number);
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             return new ResponseEntity<>(response.getStatusCode());
         }
         return new ResponseEntity<>(mapper.toPatientView(response.getBody()), HttpStatus.OK);
     }
 
+    // QUERY: Search patients by name (read operation - CQRS)
     @GetMapping("/name/{name}/profile")
     public ResponseEntity<List<PatientView>> searchPatientsByName(
             @PathVariable String name,
@@ -157,9 +169,9 @@ public class PatientController {
 
         List<Patient> patients;
         if (name != null) {
-            patients = patientService.searchByPatientName(name, page);
+            patients = queryService.searchByPatientName(name, page);
         } else {
-            patients = patientService.getAllPatients(); // este método não tem parâmetros na interface
+            patients = queryService.getAllPatients();
         }
 
         if (patients == null || patients.isEmpty()) {
@@ -168,12 +180,12 @@ public class PatientController {
         return new ResponseEntity<>(mapper.toPatientViewList(patients), HttpStatus.OK);
     }
 
-
+    // COMMAND: Update patient (write operation - CQRS)
     @PutMapping("/updatePatient")
     public ResponseEntity<Void> updatePersonalData(@RequestBody @Valid UpdatePatientRequest request, Principal principal) {
         String username = principal.getName();
         String email = username.split(",")[1];
-        patientService.updatePersonalData(email, request);
+        commandService.updatePatient(email, request);
         return ResponseEntity.noContent().build();
     }
 

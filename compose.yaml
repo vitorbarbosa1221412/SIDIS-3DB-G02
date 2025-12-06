@@ -64,7 +64,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: bootstrap
       INSTANCE_ID: patient-service-1
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db_1
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
       SERVER_PORT: 3000
@@ -72,6 +72,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      PATIENT_PEER_URLS: https://patient-service-2:3001
     ports:
       - "3000:3000"
     volumes:
@@ -97,7 +98,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: bootstrap
       INSTANCE_ID: patient-service-2
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db_2
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
       SERVER_PORT: 3001
@@ -105,6 +106,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      PATIENT_PEER_URLS: https://patient-service-1:3000
     ports:
       - "3001:3001"
     volumes:
@@ -129,15 +131,23 @@ services:
     container_name: appointment-service-1
     environment:
       SPRING_PROFILES_ACTIVE: bootstrap
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_appointments_db
+      INSTANCE_ID: appointment-service-1
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_appointments_db_1
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
       SERVER_PORT: 4000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      APPOINTMENT_PEER_URLS: http://appointment-service-2:4001
     ports:
       - "4000:4000"
     volumes:
       - ./logs/appointment-service:/var/log/sidis/appointment-service
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     networks:
@@ -150,15 +160,23 @@ services:
     container_name: appointment-service-2
     environment:
       SPRING_PROFILES_ACTIVE: bootstrap
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_appointments_db
+      INSTANCE_ID: appointment-service-2
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_appointments_db_2
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
       SERVER_PORT: 4001
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      APPOINTMENT_PEER_URLS: http://appointment-service-1:4000
     ports:
       - "4001:4001"
     volumes:
       - ./logs/appointment-service:/var/log/sidis/appointment-service
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     networks:

@@ -40,8 +40,6 @@ public class PatientNumber {
     public Long getNextPatientNumber(PatientRepository patientRepository) {
         String lastPatientNumber = patientRepository.getLastPatientNumber(getCurrentYear());
 
-        System.out.println("DEBUG - lastPatientNumber: '" + lastPatientNumber + "'");
-
         if (lastPatientNumber == null || lastPatientNumber.isBlank()) {
             return 1L;
         }

@@ -4,6 +4,7 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
@@ -24,6 +25,7 @@ import static com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagem
 /**
  * Lê src/main/resources/Patient.txt (CSV delimitado por ;) e popula a tabela PATIENT.
  * Se o campo patientNumber vier vazio, gera-o no formato AAAA/N onde N é incremental.
+
  */
 @Component
 @RequiredArgsConstructor
@@ -33,9 +35,20 @@ public class PatientBootstrapper implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     private final PatientRepository patientRepo;
+    
+    @Value("${server.instance.id:patient-service-1}")
+    private String instanceId;
 
     @Override
     public void run(final String... args) {
+        // Com database-per-instance, executar bootstrap apenas na instância 1
+        // Os dados serão replicados para outras instâncias via eventos RabbitMQ
+        if (!instanceId.equals("patient-service-1")) {
+            System.out.println("Bootstrap skipped for instance: " + instanceId + " (only patient-service-1 runs bootstrap)");
+            return;
+        }
+        
+        System.out.println("Running PatientBootstrapper on instance: " + instanceId);
         try (BufferedReader reader =
                      Files.newBufferedReader(Paths.get("src/main/resources/Patient.txt"))) {
 

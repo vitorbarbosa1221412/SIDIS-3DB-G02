@@ -22,5 +22,6 @@ public class PatientUpdatedEvent implements Serializable {
     private String phoneNumber;
     private String address;
     private LocalDateTime timestamp;
+    private String instanceId; // ID of the instance that published this event
 }
 

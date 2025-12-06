@@ -131,6 +131,9 @@ public class SecurityConfig {
                 // Private endpoints Patient
                 .requestMatchers("/api/admin/user/**").hasRole(Role.ADMIN)
                 .requestMatchers(HttpMethod.GET,"/api/patients/{name}/profile").hasRole(Role.ADMIN)
+                .requestMatchers(HttpMethod.GET,"/api/patients/id/{id}/profile").hasAnyRole(Role.ADMIN, Role.PHYSICIAN, Role.PATIENT)
+                .requestMatchers(HttpMethod.GET,"/api/patients/number/{number}").hasAnyRole(Role.ADMIN, Role.PHYSICIAN, Role.PATIENT)
+                .requestMatchers(HttpMethod.GET,"/api/patients/internal/**").permitAll() // Internal replication endpoint
                 .requestMatchers(HttpMethod.GET,"/api/patient/search/**").hasRole(Role.PHYSICIAN)
                 .requestMatchers(HttpMethod.GET,"/api/patient/{year}/{id}/profile").hasRole(Role.PHYSICIAN)
                 .requestMatchers(HttpMethod.PUT,"/api/patients/updatePatient").hasRole(Role.PATIENT)

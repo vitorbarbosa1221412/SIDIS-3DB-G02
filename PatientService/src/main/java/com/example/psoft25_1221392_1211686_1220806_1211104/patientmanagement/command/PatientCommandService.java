@@ -18,6 +18,7 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.reposi
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,9 @@ public class PatientCommandService {
     private final Password passVal = new Password();
     private final com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.PatientNumber patientNumGen = 
         new com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model.PatientNumber();
+    
+    @Value("${server.instance.id:patient-service-1}")
+    private String instanceId;
 
     @Transactional
     public Patient createPatient(CreatePatientRequest request) {
@@ -81,6 +85,7 @@ public class PatientCommandService {
             .emailAddress(savedPatient.getEmailAddress())
             .name(savedPatient.getName())
             .timestamp(LocalDateTime.now())
+            .instanceId(instanceId)
             .build();
         
         eventPublisher.publishPatientCreated(event);
@@ -105,6 +110,7 @@ public class PatientCommandService {
             .phoneNumber(updatedPatient.getPhoneNumber())
             .address(updatedPatient.getAddress())
             .timestamp(LocalDateTime.now())
+            .instanceId(instanceId)
             .build();
         
         eventPublisher.publishPatientUpdated(event);

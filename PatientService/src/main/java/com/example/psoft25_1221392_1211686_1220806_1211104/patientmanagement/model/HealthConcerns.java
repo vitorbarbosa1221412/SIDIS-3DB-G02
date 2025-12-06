@@ -1,5 +1,6 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ public class HealthConcerns {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id")
+    @JsonIgnoreProperties({"healthConcerns", "user"})
     private Patient patient;
 
     // Construtores

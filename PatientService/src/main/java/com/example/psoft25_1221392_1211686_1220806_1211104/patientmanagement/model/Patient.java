@@ -3,6 +3,7 @@ package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.mo
 //import com.example.psoft25_1221392_1211686_1220806_1211104.physicianmanagement.model.ProfilePicture;
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.Role;
 import com.example.psoft25_1221392_1211686_1220806_1211104.usermanagement.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -54,6 +55,7 @@ public class Patient {
     //private ProfilePicture profilePicture;
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("patient")
     private List<HealthConcerns> healthConcerns = new ArrayList<>();
 
 

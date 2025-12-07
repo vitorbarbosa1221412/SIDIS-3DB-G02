@@ -9,8 +9,6 @@ To deploy the HAP project, the user most have the following software and configu
 
 All the microservices and their dependencies are in containers that are managed by [Docker](https://www.docker.com/).
 
-## Architectural Decisions
-
 ## C4
 
 ### C4 Level 1: System Context
@@ -30,11 +28,11 @@ All the microservices and their dependencies are in containers that are managed 
 
 ![ContainerDiagram.svg](docs/C4/svg/ContainerDiagram.svg)
 
+### C4 Level 3: Components
+
+![ComponentsDiagram](docs/C4/svg/ComponentsDiagram.svg)
+
 ## C4+1
-
-### C4+1: Logical View
-
-![LogicalView_AppointmentsService.svg](docs/C4+1/svg/LogicalView.svg)
 
 ### C4+1: Physical View
 
@@ -43,6 +41,8 @@ All the microservices and their dependencies are in containers that are managed 
 ### Domain-driven segregation
 
 ![DM.svg](docs/Glogal_Artifacts/svg/DM.svg)
+
+## Architectural Decisions
 
 ### Load Balancing
 
@@ -62,8 +62,6 @@ For the appointment and patient services, we decided that using CQRS was unneces
 ### OBSERVABILITY
 
 We use grafana labs solution for observability(Alloy, Loki and Tempo) and Prometheus. Access http://localhost:3030/ to see the dashboard, for more info see the [Observability](docs/Glogal_Artifacts/Observability.md) document.
-
-## Design
 
 ## Quality Models
 

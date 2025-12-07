@@ -2,7 +2,7 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 LAYOUT_WITH_LEGEND()
 
-title Physical View diagram for the Healthcare Administration Platform (HAP).
+title Components diagram for the Healthcare Administration Platform (HAP).
 
 rectangle "Appointment Service" as appointment #line.dashed {
     Component(appointment_controller, "Appointment Controller", "Spring REST Controller", "Handles HTTPS Requests")

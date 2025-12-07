@@ -11,8 +11,8 @@ participant AppointSvc_Controller as "Appointment Service Controller"
 participant AppointSvc_Service as "Appointment Service Service"
 participant AppointSvc_Repository as "Appointment Service Repository"
 end box
-participant PatientSvc as "Patient Service"
-participant PhysicianSvc as "Physician Service"
+participant PatientSvc as "Patient Service (Instance X)"
+participant PhysicianSvc as "Physician Service (Instance X)"
 
 Patient -> Gateway : Asks to schedule appointment
 activate Patient
@@ -66,6 +66,7 @@ end
 AppointSvc_Service -> AppointSvc_Repository : save(appointment)
 activate AppointSvc_Repository
 AppointSvc_Repository --> AppointSvc_Service : created
+
 deactivate AppointSvc_Repository
 AppointSvc_Service --> AppointSvc_Controller : created
 deactivate AppointSvc_Service

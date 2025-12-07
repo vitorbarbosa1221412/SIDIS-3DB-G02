@@ -207,7 +207,7 @@ location ^~ /api/patients {
 - Variable-based approach allows proper SNI handling for each backend server
 - Ensures SSL handshake succeeds with correct server name indication
 
-**⚠️ Security Note**: `proxy_ssl_verify off` should be enabled in production with proper certificates.
+**Security Note**: `proxy_ssl_verify off` should be enabled in production with proper certificates.
 
 ## Health Checks
 

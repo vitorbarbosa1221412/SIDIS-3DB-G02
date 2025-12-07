@@ -1,0 +1,45 @@
+@startuml LogicalView_AppointmentsService
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_WITH_LEGEND()
+
+title Physical View diagram for the Healthcare Administration Platform (HAP).
+
+rectangle "Appointment Service" as appointment #line.dashed {
+    Component(appointment_controller, "Appointment Controller", "Spring REST Controller", "Handles HTTPS Requests")
+    Component(appointment_service, "Appointment Service", "Spring Service", "Handles Appointment Business Logic")
+    Component(appointment_repository, "Appointment Repository", "Spring Data", "Handles Data Access")
+
+    Rel(appointment_controller, appointment_service, "Uses")
+    Rel(appointment_service, appointment_repository, "Uses")
+
+    Component(appointmentRecord_controller, "Appointment Record Controller", "Spring REST Controller", "Handles HTTPS Requests")
+    Component(appointmentRecord_service, "Appointment Record Service", "Spring Service", "Handles Appointment Business Logic")
+    Component(appointmentRecord_repository, "Appointment Record Repository", "Spring Data", "Handles Data Access")
+
+    Rel(appointmentRecord_controller, appointmentRecord_service, "Uses")
+    Rel(appointmentRecord_service, appointmentRecord_repository, "Uses")
+}
+
+rectangle "Physician Service" as physician #line.dashed {
+    Component(physician_controller, "Physician Controller", "Spring REST Controller", "Handles HTTPS Requests")
+    Component(physician_service, "Physician Service", "Spring Service", "Physician Appointment Business Logic")
+    Component(physician_repository, "Physician Repository", "Spring Data", "Handles Data Access")
+
+    Rel(physician_controller, physician_service, "Uses")
+    Rel(physician_service, physician_repository, "Uses")
+}
+
+rectangle "Patient Service" as patient #line.dashed {
+    Component(patient_controller, "Patient Controller", "Spring REST Controller", "Handles HTTPS Requests")
+    Component(patient_service, "Patient Service", "Spring Service", "Handles Patient Business Logic")
+    Component(patient_repository, "Patient Repository", "Spring Data", "Handles Data Access")
+
+    Rel(patient_controller, patient_service, "Uses")
+    Rel(patient_service, patient_repository, "Uses")
+}
+
+Rel_L(appointment_service, physician_service, "Communicates")
+Rel_R(appointment_service, patient_service, "Communicates")
+Rel_R(appointment_service, appointmentRecord_service, "Communicates")
+
+@enduml

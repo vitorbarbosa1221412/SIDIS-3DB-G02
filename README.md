@@ -1,6 +1,6 @@
 # SIDIS-3DB-G02
 
-The main goal of this project is to turn the monolithic HAP project in a distributed system using the proper patterns and principals.
+The main goal of this project is to turn the monolithic Healthcare Appointment Platform (HAP) project in a distributed system using the proper patterns and principals.
 
 ## Deployment Instructions
 To deploy the HAP project, the user most have the following software and configurations in their system.
@@ -11,15 +11,34 @@ All the microservices and their dependencies are in containers that are managed 
 
 ## Architectural Decisions
 
+## C4
+
+### C4 Level 1: System Context
+
+**Actors:**
+- Patient
+- Physician
+- Admin
+
+**System:** HAP
+
+**External Systems:** n/a
+
+![SystemContextDiagram.svg](docs/C4/svg/SystemContextDiagram.svg)
+
+### C4 Level 2: Containers
+
+![ContainerDiagram.svg](docs/C4/svg/ContainerDiagram.svg)
+
 ## C4+1
 
-![ContainerDiagram.svg](docs/C4+1/svg/ContainerDiagram.svg)
+### C4+1: Logical View
 
-![LogicalView_AppointmentsService.svg](docs/C4+1/svg/LogicalView_AppointmentsService.svg)
+![LogicalView_AppointmentsService.svg](docs/C4+1/svg/LogicalView.svg)
+
+### C4+1: Physical View
 
 ![PhysicalView.svg](docs/C4+1/svg/PhysicalView.svg)
-
-![SystemContextDiagram.svg](docs/C4+1/svg/SystemContextDiagram.svg)
 
 ### Domain-driven segregation
 

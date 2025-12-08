@@ -22,8 +22,15 @@ Gateway -> AppointSvc_Controller : POST api/appointments/scheduleAppointment \n 
 activate AppointSvc_Controller
 AppointSvc_Controller -> AppointSvc_Service : scheduleAppointmentByPatient(physicianNumber,\ndateTime, consultationType)
 activate AppointSvc_Service
+AppointSvc_Service -> AppointSvc_Repository : save(appointment)
+activate AppointSvc_Repository
+AppointSvc_Repository --> AppointSvc_Service : created
+deactivate AppointSvc_Repository
 AppointSvc_Service -> Broker : publish AppointmentRequestedEvent
 activate Broker
+AppointSvc_Service --> AppointSvc_Controller : created
+AppointSvc_Controller --> Gateway : created
+Gateway --> Patient : created
 Broker --> PhysicianSvc : subscribes AppointmentRequestedEvent
 activate PhysicianSvc
 PhysicianSvc -> PhysicianSvc : checks Physician WorkingHours
@@ -32,7 +39,7 @@ PhysicianSvc -> Broker : publish PhysicianBooked
 else some kind of failure
 PhysicianSvc -> Broker : publish PhysicianBookedFail
 end
-Broker --> PatientSvc : subscribes PhysicianBooked
+Broker --> PatientSvc : subscribes AppointmentRequestedEvent
 activate PatientSvc
 PatientSvc -> PatientSvc : checks PatientId
 alt successful case
@@ -40,18 +47,13 @@ PatientSvc -> Broker : publish PatientBooked
 else some kind of failure
 PatientSvc -> Broker : publish PatientBookedFail
 end
-alt successful case
-Broker --> AppointSvc_Service : consumes PhysicianBooked AND PatientBooked
-AppointSvc_Service -> AppointSvc_Repository : save(appointment)
-activate AppointSvc_Repository
-AppointSvc_Repository --> AppointSvc_Service : created
-deactivate AppointSvc_Repository
-AppointSvc_Service --> AppointSvc_Controller : created
-Gateway --> Patient : created
-else some kind of failure
+alt some kind of failure
 Broker --> AppointSvc_Service : consumes PhysicianBookedFail OR PatientBookedFail
 deactivate Broker
+AppointSvc_Service -> AppointSvc_Repository : delete(appointment)
+Broker --> PatientSvc : consumes PhysicianBookedFail
 PatientSvc -> PatientSvc : compensate
+Broker --> PhysicianSvc : consumes PatientBookedFail
 PhysicianSvc -> PhysicianSvc : compensate
 deactivate PatientSvc
 AppointSvc_Service --> AppointSvc_Controller : failed

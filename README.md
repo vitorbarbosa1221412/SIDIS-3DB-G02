@@ -5,9 +5,7 @@ The main goal of this project is to turn the monolithic Healthcare Appointment P
 ## Deployment Instructions
 To deploy the HAP project, the user most have the following software and configurations in their system.
 
-## Docker 
-
-All the microservices and their dependencies are in containers that are managed by [Docker](https://www.docker.com/).
+Docker: All the microservices and their dependencies are in containers that are managed by [Docker](https://www.docker.com/).
 
 ## C4
 

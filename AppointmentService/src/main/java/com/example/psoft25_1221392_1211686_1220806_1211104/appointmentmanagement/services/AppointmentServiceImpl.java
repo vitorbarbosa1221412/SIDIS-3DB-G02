@@ -1,6 +1,8 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.services;
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.infrastructure.repositories.impl.SpringDataAppointmentRepository;
+import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.messaging.dto.AppointmentRequestedEvent;
+import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.messaging.publisher.AppointmentEventPublisher;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.Appointment;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.AppointmentNumber;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.model.AppointmentStatus;
@@ -8,6 +10,7 @@ import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.repositories.AppointmentRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +23,12 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class AppointmentServiceImpl implements AppointmentService {
+
+    @Value("${server.instance.id:patient-service-1}")
+    private String instanceId;
 
     @Autowired
     @Qualifier("restTemplateWithAuth")
@@ -50,6 +57,9 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Autowired
     private AppointmentEditMapper mapper;
+
+    private AppointmentEventPublisher eventPublisher;
+
 
     @Override
     public Appointment createAppointment(CreateAppointmentRequest request) {
@@ -169,7 +179,20 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment appointment = new Appointment(dateTime, type, AppointmentStatus.SCHEDULED, patientId, physicianNumber);
         appointment.setAppointmentNumber(generatedNumber);
 
-        return appointmentRepository.save(appointment);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+
+        AppointmentRequestedEvent event = AppointmentRequestedEvent.builder()
+                .appointmentNumber(savedAppointment.getId())
+                .patientId(savedAppointment.getPatientId())
+                .physicianNumber(savedAppointment.getPhysicianNumber())
+                .timestamp(LocalDateTime.now())
+                .instanceId(instanceId)
+                .build();
+
+        eventPublisher.publishAppointmentRequestedEvent(event);
+        log.info("Appointment created and event published: {}", savedAppointment.getAppointmentNumber());
+
+        return savedAppointment;
     }
 
 //    @Override

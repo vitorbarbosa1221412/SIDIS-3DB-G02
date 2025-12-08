@@ -1,72 +1,117 @@
 @startuml ClinicDomainModel
 
 hide methods
+title Domain Model for the Healthcare Administration Platform (HAP)
 
 package "Patient Service"{
-    entity Patient {
+    object Patient {
         id
-        name
-        username
-        phoneNumber
-        dateOfBirth
         patientNumber
+        emailAddress
+        user
+        name
+        dateOfBirth
+        phoneNumber
+        ddress
         enabled
-        healthConcerns
+        insuranceInformation
+        dataConsent
+    }
+    object HealthConcerns {
+        id
+        description
+        dateIdentified
+        treatment
+        stillOngoing
+        dateResolved
+        patient
     }
 }
 
 package "Physician Service"{
-    entity Physician {
+    object Physician {
+        id
         name
         address
+        physicianNumber
+        user
         phoneNumber
         emailAddress
+        enabled
         department
         specialty
         workingHours
-    }
-    entity Department {
-    }
-
-    entity Specialization {
+        profilePicture
     }
 }
 
-package "Appointment Service"{
-    entity Appointment {
+package "Appointment Service" {
+    object Appointment {
+        patientNumber
+        physicianNumber
+    }
+    object AppointmentDateTime {
+        dateTime
+    }
+    object AppointmentNumber {
+        value
+    }
+    object AppointmentStatus {
+        SCHEDULED
+        COMPLETED
+        CANCELLED
+        RESCHEDULED
+    }
+    object ConsultationType {
+        GENERAL
+        DENTAL
+        PEDIATRIC
+        CARDIOLOGY
+        DERMATOLOGY
+    }
+
+    object AppointmentRecord {
+        id
         diagnosis
         treatmentRecommendation
         prescription
         recordNumber
-        appointmentNumber
-        appointmentDateTime
-        consultationType
-        status
-        patientNumber
-        patientEmail
-        physicianName
-        physicianNumber
-    }
-
-    entity AppointmentRecord {
-    }
-
-    entity AppointmentType {
     }
 }
 
-entity User {
+object User {
+	id
+	version
+	createdAt
+	modifiedAt
+	createdBy
+	modifiedBy
+	enabled
+	username
+	password
+	fullName
+	authorities
 }
 
-' Relacionamentos
-User "1" --> "*"  Patient : "User can be \n pacient"
-User "1" --> "*"  Physician : "User can be \n Physician"
-Patient "1" --> "*" Appointment : Pacient places an Appointment
-Physician "1" --> "*" Appointment : Physician attends\n Appointments
-Appointment "1" --> "1" AppointmentRecord : "Appointment generates\n AppointmentRecord"
-Physician "*" --> "             1" Department : "Physicians has  Department"
-Physician "*" --> "             1" Specialization : "Physicians has\n Specialization"
-Appointment "1" --> "1" AppointmentType : "Appointment generates\n AppointmentType"
+object Role {
+	PATIENT
+	PHYSICIAN
+	ADMIN
+}
 
+Appointment "1"-L-"1" AppointmentDateTime
+Appointment "1"--"1" AppointmentNumber
+Appointment "1"--"1" AppointmentStatus
+Appointment "1"--"1" ConsultationType
+Appointment "1"--"1" AppointmentRecord
+
+Patient "1"--"1" HealthConcerns
+
+User "1"--"*" Role
+User "1"-D-"*" Patient
+User "1"-D-"*" Physician
+
+Appointment "*"-U-"1" Physician
+Appointment "*"-U-"1" Patient
 
 @enduml

@@ -2,7 +2,7 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 LAYOUT_WITH_LEGEND()
 
-title Physical View diagram for the Healthcare Administration Platform (HAP).
+title Physical View diagram for the Healthcare Administration Platform (HAP)
 
 rectangle "Computer" as computer {
     Component(appSer1, "Container appointment-service-1", "REST API (Port 4000)", "Instance #1 of the Appointment Service App")

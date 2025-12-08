@@ -36,7 +36,11 @@ All the microservices and their dependencies are in containers that are managed 
 
 ### C4+1: Physical View
 
-![PhysicalView.svg](docs/C4+1/svg/PhysicalView.svg)
+![PhysicalView](docs/C4+1/svg/PhysicalView.svg)
+
+### C4+1: Logical View
+
+![LogicalView](docs/C4+1/svg/LogicalView.svg)
 
 ### Domain-driven segregation
 

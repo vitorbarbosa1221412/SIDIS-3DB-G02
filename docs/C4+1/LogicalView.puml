@@ -1,0 +1,130 @@
+@startuml ClinicDomainModel
+
+title Logical View diagram for the Healthcare Administration Platform (HAP)
+
+package "Patient Service"{
+    class Patient {
+        - Long id
+        - String patientNumber
+        - String emailAddress
+        - User user
+        - String name
+        - String dateOfBirth
+        - String phoneNumber
+        - String address
+        - boolean enabled
+        - String insuranceInformation
+        - String dataConsent
+    }
+    class HealthConcerns {
+        - Long id;
+        - String description;
+        - LocalDate dateIdentified;
+        - String treatment;
+        - boolean stillOngoing;
+        - LocalDate dateResolved;
+        - Patient patient;
+    }
+}
+
+package "Physician Service"{
+    class Physician {
+        - Long id
+        - String name
+        - String address
+        - String physicianNumber
+        - User user
+        - String phoneNumber
+        - String emailAddress
+        - boolean enabled
+        - String department
+        - String specialty
+        - String workingHours
+        - ProfilePicture profilePicture
+        + String toString()
+    }
+}
+
+package "Appointment Service" {
+    class Appointment {
+        -String patientNumber
+        -String physicianNumber
+    }
+    class AppointmentDateTime {
+        -LocalDateTime dateTime
+        +void setDateTime(LocalDateTime dateTime)
+        +boolean isEmpty()
+    }
+    class AppointmentNumber {
+        -String value
+        +boolean equals(Object o)
+        +int hashCode()
+    }
+    enum AppointmentStatus {
+        SCHEDULED
+        COMPLETED
+        CANCELLED
+        RESCHEDULED
+    }
+    enum ConsultationType {
+        GENERAL
+        DENTAL
+        PEDIATRIC
+        CARDIOLOGY
+        DERMATOLOGY
+    }
+
+    class AppointmentRecord {
+        -Long id;
+        -String diagnosis;
+        -String treatmentRecommendation;
+        -String prescription;
+        -Long recordNumber;
+    }
+
+}
+
+class User {
+    - static final long serialVersionUID
+	- Long id
+	- Long version
+	- LocalDateTime createdAt
+	- LocalDateTime modifiedAt
+	- String createdBy
+	- String modifiedBy
+	- boolean enabled
+	- String username
+	- String password
+	- String fullName
+	- final Set<Role> authorities
+    + void setPassword(final String password)
+    + void addAuthority(Role role)
+    + boolean isAccountNonExpired()
+    + boolean isAccountNonLocked()
+    + boolean isCredentialsNonExpired()
+}
+
+class Role {
+    - static final long serialVersionUID
+	+ static final String PATIENT
+	+ static final String PHYSICIAN
+	+ static final String ADMIN
+	- String authority
+}
+
+Appointment o-L- AppointmentDateTime
+Appointment o-- AppointmentNumber
+Appointment o-- AppointmentStatus
+Appointment o-- ConsultationType
+Appointment - AppointmentRecord
+
+Patient o-- HealthConcerns
+
+User o-U- Role
+User -D- Patient
+User -D- Physician
+
+Appointment -U- Physician
+Appointment -U- Patient
+
+@enduml

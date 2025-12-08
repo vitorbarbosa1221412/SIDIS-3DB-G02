@@ -18,9 +18,9 @@ public class InMemoryCommandDispatcher implements CommandDispatcher {
 
     private final Map<Class<? extends Command>, CommandHandler> handlers = new HashMap<>();
 
-    // Construtor padrão (pode ser vazio)
+
     public InMemoryCommandDispatcher() {
-        // Nada de lógica de reflexão complexa aqui!
+
     }
 
 

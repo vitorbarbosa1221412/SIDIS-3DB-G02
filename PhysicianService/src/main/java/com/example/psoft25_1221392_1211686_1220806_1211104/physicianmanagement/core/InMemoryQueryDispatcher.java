@@ -17,11 +17,11 @@ public class InMemoryQueryDispatcher implements QueryDispatcher {
 
     @Autowired
     public InMemoryQueryDispatcher(ApplicationContext applicationContext) {
-        // Encontra todos os beans que implementam QueryHandler
+
         Map<String, QueryHandler> handlersMap = applicationContext.getBeansOfType(QueryHandler.class);
 
         handlersMap.values().forEach(handler -> {
-            // Lógica para extrair o tipo da Query que o Handler manipula
+
             Class<?> queryType = (Class<?>) ((ParameterizedType) handler.getClass().getGenericInterfaces()[0])
                     .getActualTypeArguments()[0];
             handlers.put((Class<? extends Query>) queryType, handler);

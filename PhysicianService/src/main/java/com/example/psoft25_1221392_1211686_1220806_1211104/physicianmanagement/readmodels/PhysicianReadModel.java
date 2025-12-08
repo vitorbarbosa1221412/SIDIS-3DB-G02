@@ -18,7 +18,6 @@ public class PhysicianReadModel {
     private String physicianNumber;
     private String name;
     private String specialty;
-    // Adicione outros campos necessários que serão exibidos nas consultas
 
     // Construtores
     public PhysicianReadModel() {}

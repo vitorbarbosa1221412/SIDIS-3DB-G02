@@ -55,8 +55,7 @@ public class PhysicianAggregate {
 
     public static List<Object> create(Long newAggregateId, CreatePhysicianCommand command) {
 
-        // 1. Gera os dados do evento (obtidos do Command)
-        // Usamos os dados do Command
+
         PhysicianCreatedEvent newEvent = new PhysicianCreatedEvent(
                 newAggregateId,
                 command.getRequest().getPhysicianNumber(),
@@ -64,7 +63,7 @@ public class PhysicianAggregate {
                 command.getRequest().getSpecialty()
         );
 
-        // 2. Retorna a lista de eventos gerados
+
         return List.of(newEvent);
     }
 

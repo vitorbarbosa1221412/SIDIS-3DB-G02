@@ -45,5 +45,11 @@ public class CreatePhysicianRequest {
     @NotBlank
     private String workingHours;
 
+    @NonNull
+    @NotBlank
+    private String physicianNumber;
+
+
+
     private Set<String> authorities = new HashSet<>();
 }

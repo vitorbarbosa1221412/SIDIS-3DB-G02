@@ -1,0 +1,113 @@
+@startuml
+' US-CreatePhysician Microservices: Create Physician (CQRS + Event Sourcing) - No Auth
+
+title US-CreatePhysician: As an Admin, I want to register a new Physician
+
+actor Admin
+participant APIClient as "API Client\n(Web/Postman)"
+participant APIGateway as "API Gateway\n(Nginx:8443)"
+participant PhysicianService as "Physician Service\n(HTTPS:5000)"
+participant PhysicianController as "Physician Controller"
+participant CommandDispatcher as "Command Dispatcher\n(CQRS Core)"
+participant CreateHandler as "CreatePhysician\nCommandHandler"
+participant Aggregate as "Physician Aggregate\n(Domain)"
+participant EventStoreRepo as "EventStore Repository\n(Infrastructure)"
+participant PostgresDB as "PostgreSQL\n(Event Store)"
+participant EventPublisher as "Event Publisher\n(RabbitMQ)"
+
+autonumber
+
+' 1. Request Entry
+Admin -> APIClient : Submit physician registration data
+APIClient -> APIGateway : POST https://localhost:8443/api/physicians\n(multipart/form-data)
+activate APIGateway
+
+note right of APIGateway
+  Load balancing & SSL Termination:
+  - Listens on port 8443 (HTTPS)
+  - Routes to physician-service-1:5000
+end note
+
+APIGateway -> PhysicianService : POST https://physician-service:5000/api/physicians
+activate PhysicianService
+
+PhysicianService -> PhysicianController : createPhysician(request, image)
+activate PhysicianController
+
+' 2. Command Creation
+note right of PhysicianController
+  CQRS Pattern:
+  - Maps DTO to CreatePhysicianCommand
+  - Dispatches Command to Bus
+end note
+
+PhysicianController -> CommandDispatcher : dispatch(CreatePhysicianCommand)
+activate CommandDispatcher
+
+CommandDispatcher -> CreateHandler : handle(command)
+activate CreateHandler
+deactivate CommandDispatcher
+
+' 3. Event Sourcing Logic
+note right of CreateHandler
+  Event Sourcing Core Logic:
+  1) Generate Aggregate ID
+  2) Generate Domain Events (Static Factory)
+  3) Persist Event to Store (PostgreSQL)
+  4) Publish Event to Broker (RabbitMQ)
+end note
+
+CreateHandler -> CreateHandler : Generate new Aggregate ID
+
+' Step 3.1: Generate Events (Domain Logic)
+CreateHandler -> Aggregate : {static} create(id, command)
+activate Aggregate
+note right of Aggregate
+  Aggregate Logic:
+  - Not instantiated via constructor
+  - Static method enforces rules
+  - Returns "PhysicianCreatedEvent"
+end note
+Aggregate --> CreateHandler : List<Event> (PhysicianCreatedEvent)
+deactivate Aggregate
+
+' Step 3.2: Persist Events (Write Side)
+loop For each generated event
+    CreateHandler -> CreateHandler : Serialize Event to JSON
+    CreateHandler -> CreateHandler : Create StoredEvent Entity
+
+    CreateHandler -> EventStoreRepo : save(StoredEvent)
+    activate EventStoreRepo
+    EventStoreRepo -> PostgresDB : INSERT INTO physician_events (aggregate_id, event_data, ...)
+    activate PostgresDB
+    PostgresDB --> EventStoreRepo : Success
+    deactivate PostgresDB
+    EventStoreRepo --> CreateHandler : StoredEvent Saved
+    deactivate EventStoreRepo
+
+    ' Step 3.3: Publish Event (Async)
+    CreateHandler -> EventPublisher : publish("physician.created", event)
+    activate EventPublisher
+    note right of EventPublisher
+      Async Propagation:
+      - Publishes to RabbitMQ
+      - Triggers Projections (MongoDB Update)
+    end note
+    EventPublisher --> CreateHandler : Ack
+    deactivate EventPublisher
+end
+
+CreateHandler --> PhysicianController : void
+deactivate CreateHandler
+
+' 4. Response
+PhysicianController --> PhysicianService : HTTP 201 Created
+PhysicianService --> APIGateway : 201 Created
+APIGateway --> APIClient : 201 Created
+APIClient --> Admin : Show success: Physician registered
+
+deactivate PhysicianController
+deactivate PhysicianService
+deactivate APIGateway
+
+@enduml

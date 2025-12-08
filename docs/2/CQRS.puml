@@ -1,0 +1,92 @@
+@startuml
+!theme plain
+hide empty members
+allowmixing
+
+' Definição de estilos para os pacotes (substituindo os rects)
+skinparam package {
+    BackgroundColor<<WriteSide>> MistyRose
+    BackgroundColor<<ReadSide>> LightCyan
+}
+
+package "PhysicianService" {
+
+    package "API Layer" {
+        class PhysicianController
+    }
+
+    package "CQRS Core" {
+        interface CommandDispatcher
+        interface QueryDispatcher
+        class InMemoryCommandDispatcher
+        class InMemoryQueryDispatcher
+    }
+
+    package "Write Side (Command Model)" <<WriteSide>> {
+        package "Commands" {
+            class CreatePhysicianCommand
+            class UpdatePhysicianCommand
+        }
+        package "Command Handlers" {
+            class CreatePhysicianCommandHandler
+            class UpdatePhysicianCommandHandler
+            class BaseCommandHandler
+        }
+        package "Domain Model (Event Sourcing)" {
+            class PhysicianAggregate
+            class StoredEvent
+        }
+        package "Write Infrastructure" {
+            interface EventStoreRepository
+        }
+    }
+
+    package "Read Side (Query Model)" <<ReadSide>> {
+        package "Queries" {
+            class GetPhysicianByNumberQuery
+            class SearchPhysiciansQuery
+        }
+        package "Query Handlers" {
+            class GetPhysicianByNumberQueryHandler
+            class SearchPhysiciansQueryHandler
+        }
+        package "Read Models" {
+            class PhysicianReadModel
+            class PhysicianDTO
+        }
+        package "Read Infrastructure" {
+            interface PhysicianReadRepository
+        }
+    }
+
+    package "Messaging & Projection" {
+        class RabbitEventPublisher
+        class PhysicianEventProjector
+    }
+}
+
+database "PostgreSQL\n(Event Store)" as Postgres
+database "MongoDB\n(Read Projection)" as Mongo
+queue "RabbitMQ" as Broker
+
+' Relacionamentos
+PhysicianController ..> CommandDispatcher : dispatch
+PhysicianController ..> QueryDispatcher : dispatch
+
+InMemoryCommandDispatcher --> BaseCommandHandler
+BaseCommandHandler <|-- CreatePhysicianCommandHandler
+CreatePhysicianCommandHandler ..> PhysicianAggregate : create
+CreatePhysicianCommandHandler --> EventStoreRepository : save
+CreatePhysicianCommandHandler --> RabbitEventPublisher : publish
+
+EventStoreRepository ..> Postgres : persists
+
+InMemoryQueryDispatcher --> GetPhysicianByNumberQueryHandler
+GetPhysicianByNumberQueryHandler --> PhysicianReadRepository : find
+PhysicianReadRepository ..> Mongo : reads
+
+RabbitEventPublisher ..> Broker : push
+Broker ..> PhysicianEventProjector : consume
+PhysicianEventProjector --> PhysicianReadRepository : save (Projection)
+
+@enduml

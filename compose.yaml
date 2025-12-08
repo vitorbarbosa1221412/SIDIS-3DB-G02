@@ -39,6 +39,7 @@ services:
     networks:
       - sidis-network
 
+
   mongodb:
       image: mongo:latest
       container_name: sidis-mongodb
@@ -66,7 +67,7 @@ services:
       INSTANCE_ID: patient-service-1
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_patients_db_1
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+      SPRING_DATASOURCE_PASSWORD: UoU4CcrIoGNgOtK31
       SERVER_PORT: 3000
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
@@ -189,7 +190,7 @@ services:
     container_name: physician-service-1
     environment:
       SPRING_PROFILES_ACTIVE: bootstrap
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
       SPRING_DATA_MONGODB_HOST: mongodb
@@ -223,7 +224,7 @@ services:
     container_name: physician-service-2
     environment:
       SPRING_PROFILES_ACTIVE: bootstrap
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
       SERVER_PORT: 5001

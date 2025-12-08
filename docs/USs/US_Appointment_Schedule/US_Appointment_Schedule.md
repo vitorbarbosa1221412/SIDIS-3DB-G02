@@ -42,43 +42,24 @@ n/a
 
 - Success/Fail of the operation.
 
-
-### 1.6. System Sequence Diagram (SSD)
-
-![USS_Appointment_Schedule](svg/USS_Appointment_Schedule.svg)
-
-### 1.7 Other Relevant Remarks
+### 1.6 Other Relevant Remarks
 
 n/a
 
-## 2. OO Analysis
+## 2. Design - User Story Realization
 
-### 2.1. Relevant Domain Model Excerpt
-
-![DM_Appointment_Schedule](svg/DM_Appointment_Schedule.svg)
-
-### 2.2. Other Remarks
-
-- n/a
-
-## 3. Design - User Story Realization
-
-### 3.1. Sequence Diagram (SD)
+### 2.1. Sequence Diagram (SD)
 
 ![US_Appointment_Schedule](svg/US_Appointment_Schedule.svg)
 
-### 3.2. Class Diagram (CD)
-
-![CD_Appointment_Schedule](svg/CD_Appointment_Schedule.svg)
-
-## 4. Tests
+## 3. Tests
 
 
 
-## 5. Integration and Demo
+## 4. Integration and Demo
 
 n/a
 
-## 6. Observations
+## 5. Observations
 
 n/a

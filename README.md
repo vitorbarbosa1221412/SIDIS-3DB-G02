@@ -42,7 +42,7 @@ All the microservices and their dependencies are in containers that are managed 
 
 ![LogicalView](docs/C4+1/svg/LogicalView.svg)
 
-### Domain-driven segregation
+### Domain Model
 
 ![DM.svg](docs/Glogal_Artifacts/svg/DM.svg)
 
@@ -69,7 +69,7 @@ We use grafana labs solution for observability(Alloy, Loki and Tempo) and Promet
 
 ## Quality Models
 
-The quality models we used for HAP to guide us in the transition from monolith to distributed architecture were both [FURPS+](docs/Glogal_Artifacts/FURPS.md) and [ISO 25010](docs/Glogal_Artifacts/ISO25010.md) to ensure the quality, of the software and to help us guide through the implementation.
+The quality model we used for HAP to guide us in the transition from monolith to distributed architecture was [FURPS+](docs/Glogal_Artifacts/FURPS.md) to ensure the quality, of the software and to help us guide through the implementation.
 
 # Autoavaliação
 ### 1221412 - Vítor Barbosa

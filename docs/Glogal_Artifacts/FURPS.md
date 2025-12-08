@@ -41,7 +41,7 @@ In case the system fails another instance should be available and there should b
 
 ## Performance
 
-The software should be able to add and store more and more information, about the labs, the clients, etc.
+The software should be able to add and store more and more information.
 It also should start up in less than 10 seconds. At certain times of the day, it is expected that the system will be overloaded. To avoid
 potential problems, the system must be prepared so that the response time is at maximum of 5
 seconds regardless of the existing load.
@@ -51,18 +51,17 @@ Overall system availability must be higher than 99% per year.
 
 ### Maintenance and Upgrades:
 
-The software should allow for easy maintenance  without disrupting the daily operations of the laboratories.
+The software should allow for easy maintenance  without disrupting the users.
 
 ### Testability
 
 The software should have a testing component to ensure that it runs the way it was designed for.
-For that, it should be used the Google Testing Framework.
 
 ## +
 
 ### Design Constraints
 
-The software needs to be coded using C++.
+The software needs to be coded using Java.
 All project artifacts (including code) must be developed in English.
 
 ### Implementation Constraints
@@ -71,9 +70,7 @@ No implementation constraints stated.
 
 ### Interface Constraints
 
-It is also important that the system is
-prepared to easily support data persistence on multiple target systems as, for instance, relational
-databases, NoSQL databases or in memory databases.
+No interface constraint stated.
 
 ### Physical Constraints
 

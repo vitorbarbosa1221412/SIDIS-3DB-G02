@@ -183,60 +183,107 @@ services:
     networks:
       - sidis-network
 
-  physician-service-1:
-    build:
-      context: ./PhysicianService
-      dockerfile: Dockerfile
-    container_name: physician-service-1
-    environment:
-      SPRING_PROFILES_ACTIVE: bootstrap
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
-      SPRING_DATA_MONGODB_HOST: mongodb
-      SPRING_DATA_MONGODB_PORT: 27017
-      SPRING_DATA_MONGODB_DATABASE: hap_physicians_read
-      SERVER_PORT: 5000
 
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+  physician-command-service-1:
+      build:
+        context: ./PhysicianCommandService
+        dockerfile: Dockerfile
+      container_name: physician-command-service-1
+      environment:
+        SPRING_PROFILES_ACTIVE: bootstrap
+        SERVER_PORT: 5000
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+        PATIENT_SERVICE_URL: https://patient-service-1:3000/api
+      ports:
+        - "5000:5000"
+      volumes:
+        - ./logs/physician-command-service:/var/log/sidis/physician-command-service
+      depends_on:
+        postgres:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
+      networks:
+        - sidis-network
 
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./logs/physician-service:/var/log/sidis/physician-service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - sidis-network
+  physician-command-service-2:
+      build:
+        context: ./PhysicianCommandService
+        dockerfile: Dockerfile
+      container_name: physician-command-service-2
+      environment:
+        SPRING_PROFILES_ACTIVE: bootstrap
+        SERVER_PORT: 5002
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+        PATIENT_SERVICE_URL: https://patient-service-2:3001/api
+      ports:
+        - "5002:5002"
+      volumes:
+        - ./logs/physician-command-service:/var/log/sidis/physician-command-service
+      depends_on:
+        postgres:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
+      networks:
+        - sidis-network
 
-  physician-service-2:
-    build:
-      context: ./PhysicianService
-      dockerfile: Dockerfile
-    container_name: physician-service-2
-    environment:
-      SPRING_PROFILES_ACTIVE: bootstrap
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
-      SERVER_PORT: 5001
-    ports:
-      - "5001:5001"
-    volumes:
-      - ./logs/physician-service:/var/log/sidis/physician-service
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - sidis-network
+
+  physician-query-service-1:
+      build:
+        context: ./PhysicianQueryService
+        dockerfile: Dockerfile
+      container_name: physician-query-service-1
+      environment:
+        SPRING_PROFILES_ACTIVE: bootstrap
+        SERVER_PORT: 5001
+        SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/hap_physicians_read
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+      ports:
+        - "5001:5001"
+      volumes:
+        - ./logs/physician-query-service:/var/log/sidis/physician-query-service
+      depends_on:
+        mongodb:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
+      networks:
+        - sidis-network
+
+
+  physician-query-service-2:
+      build:
+        context: ./PhysicianQueryService
+        dockerfile: Dockerfile
+      container_name: physician-query-service-2
+      environment:
+        SPRING_PROFILES_ACTIVE: bootstrap
+        SERVER_PORT: 5003
+        SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/hap_physicians_read
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+      ports:
+        - "5003:5003"
+      volumes:
+        - ./logs/physician-query-service:/var/log/sidis/physician-query-service
+      depends_on:
+        mongodb:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_healthy
+      networks:
+        - sidis-network
+
 
   nginx:
     image: nginx:alpine
@@ -249,8 +296,10 @@ services:
     depends_on:
       - appointment-service-1
       - appointment-service-2
-      - physician-service-1
-      - physician-service-2
+      - physician-command-service-1
+      - physician-command-service-2
+      - physician-query-service-1
+      - physician-query-service-2
       - patient-service-1
       - patient-service-2
     networks:

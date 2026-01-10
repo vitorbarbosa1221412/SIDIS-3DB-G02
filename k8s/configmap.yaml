@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sidis-config
+  namespace: sidis
+data:
+  # Database URLs
+  SPRING_DATASOURCE_URL_PATIENT_1: "jdbc:postgresql://postgres:5432/sidis_patients_db_1"
+  SPRING_DATASOURCE_URL_PATIENT_2: "jdbc:postgresql://postgres:5432/sidis_patients_db_2"
+  SPRING_DATASOURCE_URL_APPOINTMENT_1: "jdbc:postgresql://postgres:5432/sidis_appointments_db_1"
+  SPRING_DATASOURCE_URL_APPOINTMENT_2: "jdbc:postgresql://postgres:5432/sidis_appointments_db_2"
+  SPRING_DATASOURCE_URL_PHYSICIAN: "jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified"
+  
+  # MongoDB URL
+  SPRING_DATA_MONGODB_URI: "mongodb://mongodb:27017/hap_physicians_read"
+  
+  # Service URLs
+  PATIENT_SERVICE_URL_1: "https://patient-service-1:3000/api"
+  PATIENT_SERVICE_URL_2: "https://patient-service-2:3001/api"
+  APPOINTMENT_SERVICE_URL: "http://appointment-service-1:4000/api/appointments"
+  PHYSICIAN_SERVICE_URL: "https://localhost:8444/api/physicians"
+  
+  # RabbitMQ Configuration
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  
+  # Server Ports
+  SERVER_PORT_PATIENT_1: "3000"
+  SERVER_PORT_PATIENT_2: "3001"
+  SERVER_PORT_APPOINTMENT_1: "4000"
+  SERVER_PORT_APPOINTMENT_2: "4001"
+  SERVER_PORT_PHYSICIAN_COMMAND_1: "5000"
+  SERVER_PORT_PHYSICIAN_COMMAND_2: "5002"
+  SERVER_PORT_PHYSICIAN_QUERY_1: "5001"
+  SERVER_PORT_PHYSICIAN_QUERY_2: "5003"
+  
+  # Spring Profiles
+  SPRING_PROFILES_ACTIVE: "bootstrap"
+  
+  # Instance IDs
+  INSTANCE_ID_PATIENT_1: "patient-service-1"
+  INSTANCE_ID_PATIENT_2: "patient-service-2"
+  INSTANCE_ID_APPOINTMENT_1: "appointment-service-1"
+  INSTANCE_ID_APPOINTMENT_2: "appointment-service-2"
+  INSTANCE_ID_PHYSICIAN_1: "physician-service-1"
+  INSTANCE_ID_PHYSICIAN_2: "physician-service-2"
+  
+  # Peer URLs for replication
+  PATIENT_PEER_URLS_1: "https://patient-service-2:3001"
+  PATIENT_PEER_URLS_2: "https://patient-service-1:3000"
+  APPOINTMENT_PEER_URLS_1: "http://appointment-service-2:4001"
+  APPOINTMENT_PEER_URLS_2: "http://appointment-service-1:4000"
+  
+  # Observability URLs
+  LOKI_URL: "http://loki:3100"
+  TEMPO_URL: "http://tempo:4318"
+  PROMETHEUS_URL: "http://prometheus:9090"
+

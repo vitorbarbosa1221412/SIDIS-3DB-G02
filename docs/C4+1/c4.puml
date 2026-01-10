@@ -1,0 +1,84 @@
+@startuml PhysicalView
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_WITH_LEGEND()
+
+title Physical View diagram for the Healthcare Administration Platform (HAP)
+
+rectangle "Computer" as computer {
+    Component(appSer1, "Container appointment-service-1", "REST API (Port 4000)", "Instance #1 of the Appointment Service App")
+    Component(appSer2, "Container appointment-service-2", "REST API (Port 4001)", "Instance #2 of the Appointment Service App")
+    Component(paSer1, "Container patient-service-1", "REST API (Port 3000)", "Instance #1 of the Patient Service App")
+    Component(paSer2, "Container patient-service-2", "REST API (Port 3001)", "Instance #2 of the Patient Service App")
+    Component(phSer1, "Container physician-service-1", "REST API (Port 5000)", "Instance #1 of the Physician Service App")
+    Component(phSer2, "Container physician-service-2", "REST API (Port 5001)", "Instance #2 of the Physician Service App")
+
+    Component(rabbitmq, "Container rabbitmq", "RabbitMQ (Port 5672)", "")
+    Component(postgresql, "Container postgresql", "PostgreSQL (Port 5432)", "Stores all the databases")
+    Component(mangodb, "Container mangodb", "MongoDB (Port 27017)", "")
+    Component(nginx, "Container nginx", "Nginx (Port 8080)", "")
+
+    Component(loki, "Container loki", "Loki (Port 3100)", "Log aggregation")
+    Component(tempo, "Container tempo", "Tempo (Port 3200)", "Distributed tracing")
+    Component(prometheus, "Container prometheus", "Prometheus (Port 9090)", "Metrics collection")
+    Component(alloy, "Container alloy", "Alloy (Port 12345)", "Metrics & logs collection agent")
+    Component(grafana, "Container grafana", "Grafana (Port 3030)", "Observability dashboard")
+
+    ' Database connections
+    BiRel(appSer1, postgresql, "Reads/Writes")
+    BiRel(appSer2, postgresql, "Reads/Writes")
+    BiRel(paSer1, postgresql, "Reads/Writes")
+    BiRel(paSer2, postgresql, "Reads/Writes")
+    Rel(phSer1, postgresql, "Writes")
+    Rel(phSer2, postgresql, "Writes")
+
+    Rel(phSer1, mangodb, "Reads")
+    Rel(phSer2, mangodb, "Reads")
+
+    ' Nginx routing
+    Rel(nginx, appSer1, "redirects")
+    Rel(nginx, appSer2, "redirects")
+    Rel(nginx, paSer1, "redirects")
+    Rel(nginx, paSer2, "redirects")
+    Rel(nginx, phSer1, "redirects")
+    Rel(nginx, phSer2, "redirects")
+
+    ' RabbitMQ messaging
+    BiRel(rabbitmq, appSer1, "")
+    BiRel(rabbitmq, appSer2, "")
+    BiRel(rabbitmq, paSer1, "")
+    BiRel(rabbitmq, paSer2, "")
+    BiRel(rabbitmq, phSer1, "")
+    BiRel(rabbitmq, phSer2, "")
+
+    ' Observability - Logs flow
+    Rel(appSer1, alloy, "logs")
+    Rel(appSer2, alloy, "logs")
+    Rel(paSer1, alloy, "logs")
+    Rel(paSer2, alloy, "logs")
+    Rel(phSer1, alloy, "logs")
+    Rel(phSer2, alloy, "logs")
+    Rel(alloy, loki, "logs")
+
+    ' Observability - Metrics flow
+    Rel(appSer1, prometheus, "metrics")
+    Rel(appSer2, prometheus, "metrics")
+    Rel(paSer1, prometheus, "metrics")
+    Rel(paSer2, prometheus, "metrics")
+    Rel(phSer1, prometheus, "metrics")
+    Rel(phSer2, prometheus, "metrics")
+
+    ' Observability - Traces flow
+    Rel(appSer1, tempo, "traces")
+    Rel(appSer2, tempo, "traces")
+    Rel(paSer1, tempo, "traces")
+    Rel(paSer2, tempo, "traces")
+    Rel(phSer1, tempo, "traces")
+    Rel(phSer2, tempo, "traces")
+
+    ' Observability - Dashboard connections
+    BiRel(grafana, prometheus, "queries")
+    BiRel(grafana, loki, "queries")
+    BiRel(grafana, tempo, "queries")
+}
+
+@enduml

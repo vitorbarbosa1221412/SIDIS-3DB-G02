@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: physician-query-service-2
+  namespace: sidis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: physician-query-service-2
+  template:
+    metadata:
+      labels:
+        app: physician-query-service-2
+    spec:
+      containers:
+      - name: physician-query-service
+        image: physician-query-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5003
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: sidis-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: sidis-config
+              key: SERVER_PORT_PHYSICIAN_QUERY_2
+        - name: SPRING_DATA_MONGODB_URI
+          valueFrom:
+            configMapKeyRef:
+              name: sidis-config
+              key: SPRING_DATA_MONGODB_URI
+        - name: SPRING_RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: sidis-config
+              key: RABBITMQ_HOST
+        - name: SPRING_RABBITMQ_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: sidis-config
+              key: RABBITMQ_PORT
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: sidis-secrets
+              key: RABBITMQ_USERNAME
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sidis-secrets
+              key: RABBITMQ_PASSWORD
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 5003
+            scheme: HTTPS
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 5003
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: physician-query-service-2
+  namespace: sidis
+spec:
+  selector:
+    app: physician-query-service-2
+  ports:
+  - port: 5003
+    targetPort: 5003
+

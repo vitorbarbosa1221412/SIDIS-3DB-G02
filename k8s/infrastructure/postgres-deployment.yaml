@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: sidis
+data:
+  init.sql: |
+    -- Patient Service Databases (one per instance)
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sidis_patients_db_1') THEN
+            CREATE DATABASE sidis_patients_db_1;
+        END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sidis_patients_db_2') THEN
+            CREATE DATABASE sidis_patients_db_2;
+        END IF;
+    END
+    $$;
+
+    -- Physician Service Database (shared for now)
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sidis_physicians_db') THEN
+            CREATE DATABASE sidis_physicians_db;
+        END IF;
+    END
+    $$;
+
+    -- Appointment Service Databases (one per instance)
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sidis_appointments_db_1') THEN
+            CREATE DATABASE sidis_appointments_db_1;
+        END IF;
+    END
+    $$;
+
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'sidis_appointments_db_2') THEN
+            CREATE DATABASE sidis_appointments_db_2;
+        END IF;
+    END
+    $$;
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: sidis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: sidis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: sidis-secrets
+              key: SPRING_DATASOURCE_USERNAME
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sidis-secrets
+              key: SPRING_DATASOURCE_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+      - name: init-script
+        configMap:
+          name: postgres-init-script
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: sidis
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+

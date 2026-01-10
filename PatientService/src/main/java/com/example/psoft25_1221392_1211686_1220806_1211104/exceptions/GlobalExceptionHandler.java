@@ -144,6 +144,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 //.body(new ApiCallError<>("Access denied!", List.of(ex.getMessage())));
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ResponseEntity<ApiCallError<String>> handleServiceUnavailableException(final HttpServletRequest request,
+                                                                                   final ServiceUnavailableException ex) {
+        logger.error("ServiceUnavailableException {} - {}\n", request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+                //.body(new ApiCallError<>("Service Unavailable", List.of(ex.getMessage())));
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

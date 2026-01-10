@@ -1,0 +1,159 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: sidis
+data:
+  config.alloy: |
+    // Patient Service Logs
+    local.file_match "patient_logs" {
+        path_targets = [{"__path__" = "/var/log/sidis/patient-service/app.log", "service" = "patient-service"}]
+    }
+
+    // Appointment Service Logs
+    local.file_match "appointment_logs" {
+        path_targets = [{"__path__" = "/var/log/sidis/appointment-service/app.log", "service" = "appointment-service"}]
+    }
+
+    // Physician Service Logs
+    local.file_match "physician_logs" {
+        path_targets = [{"__path__" = "/var/log/sidis/physician-service/app.log", "service" = "physician-service"}]
+    }
+
+    // Collect Patient Service Logs
+    loki.source.file "patient_files" {
+        targets    = local.file_match.patient_logs.targets
+        forward_to = [loki.process.patient_logs.receiver]
+    }
+
+    // Collect Appointment Service Logs
+    loki.source.file "appointment_files" {
+        targets    = local.file_match.appointment_logs.targets
+        forward_to = [loki.process.appointment_logs.receiver]
+    }
+
+    // Collect Physician Service Logs
+    loki.source.file "physician_files" {
+        targets    = local.file_match.physician_logs.targets
+        forward_to = [loki.process.physician_logs.receiver]
+    }
+
+    // Process Patient Service Logs
+    loki.process "patient_logs" {
+        stage.logfmt {
+            mapping = {
+                "extracted_level" = "level",
+            }
+        }
+        stage.labels {
+            values = {
+                "level" = "extracted_level",
+                "service" = "patient-service",
+            }
+        }
+        forward_to = [loki.write.local_loki.receiver]
+    }
+
+    // Process Appointment Service Logs
+    loki.process "appointment_logs" {
+        stage.logfmt {
+            mapping = {
+                "extracted_level" = "level",
+            }
+        }
+        stage.labels {
+            values = {
+                "level" = "extracted_level",
+                "service" = "appointment-service",
+            }
+        }
+        forward_to = [loki.write.local_loki.receiver]
+    }
+
+    // Process Physician Service Logs
+    loki.process "physician_logs" {
+        stage.logfmt {
+            mapping = {
+                "extracted_level" = "level",
+            }
+        }
+        stage.labels {
+            values = {
+                "level" = "extracted_level",
+                "service" = "physician-service",
+            }
+        }
+        forward_to = [loki.write.local_loki.receiver]
+    }
+
+    loki.write "local_loki" {
+        endpoint {
+            url = "http://loki:3100/loki/api/v1/push"
+        }
+    }
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: alloy
+  namespace: sidis
+spec:
+  selector:
+    matchLabels:
+      app: alloy
+  template:
+    metadata:
+      labels:
+        app: alloy
+    spec:
+      containers:
+      - name: alloy
+        image: grafana/alloy:latest
+        ports:
+        - containerPort: 12345
+        args:
+        - run
+        - --server.http.listen-addr=0.0.0.0:12345
+        - --storage.path=/var/lib/alloy/data
+        - /etc/alloy/config.alloy
+        volumeMounts:
+        - name: alloy-config
+          mountPath: /etc/alloy
+        - name: logs
+          mountPath: /var/log/sidis
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 12345
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 12345
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: alloy-config
+        configMap:
+          name: alloy-config
+      - name: logs
+        hostPath:
+          path: /var/log/sidis
+          type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alloy
+  namespace: sidis
+spec:
+  selector:
+    app: alloy
+  ports:
+  - port: 12345
+    targetPort: 12345
+

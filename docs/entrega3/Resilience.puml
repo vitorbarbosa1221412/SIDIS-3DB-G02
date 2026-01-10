@@ -1,0 +1,65 @@
+@startuml
+title Resilience Test Scenario: Retry & Circuit Breaker Flow
+autonumber
+skinparam responseMessageBelowArrow true
+
+actor Client as "Postman\n(Client)"
+participant Physician as "Physician Service"
+participant R4J as "Resilience4j\n(Circuit Breaker & Retry)"
+participant Patient as "Patient Service\n(Target)"
+
+note over Patient #ffaaaa: Service is DOWN (Stopped)
+
+== Phase 1: Retry Pattern ==
+
+Client -> Physician: GET /api/physicians/test-patient/1
+activate Physician
+
+Physician -> R4J: Call patientExists(1)
+activate R4J
+
+    group Retry Policy [Config: 3 Attempts]
+        R4J ->x Patient: Attempt 1: HTTP GET
+        note right: Connection Refused
+        R4J -> R4J: Wait (Backoff Delay)
+
+        R4J ->x Patient: Attempt 2: HTTP GET
+        note right: Connection Refused
+        R4J -> R4J: Wait (Backoff Delay)
+
+        R4J ->x Patient: Attempt 3: HTTP GET
+        note right: Connection Refused
+    end
+
+    note over R4J: Max Retries Exceeded -> Exception
+
+    R4J --> Physician: <b>Catch Exception & Execute Fallback</b>\n(fallbackPatientExists)
+    note right: Returns 'false' (Graceful Degradation)
+
+deactivate R4J
+Physician --> Client: 200 OK\nBody: "Patient 1 exists? false"
+deactivate Physician
+
+
+== Internal State Change ==
+
+note over R4J #ffaaaa: <b>Circuit Breaker Trip</b>\nError Threshold reached (>50%)\nState changes from <b>CLOSED</b> to <b>OPEN</b>
+
+== Phase 2: Circuit Breaker OPEN ==
+
+Client -> Physician: GET /api/physicians/test-patient/1
+activate Physician
+
+Physician -> R4J: Call patientExists(1)
+activate R4J
+
+    note right of R4J #FFAAAA: <b>FAIL FAST</b>\nCircuit is OPEN.\nCall is blocked immediately.
+
+    R4J --> Physician: <b>Execute Fallback Immediately</b>\n(fallbackPatientExists)
+
+deactivate R4J
+Physician --> Client: 200 OK\nBody: "Patient 1 exists? false"
+deactivate Physician
+
+
+@enduml

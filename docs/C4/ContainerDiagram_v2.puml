@@ -1,0 +1,132 @@
+@startuml ContainerDiagram_v2
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram v2 - Healthcare Administration Platform (HAP) with Observability
+
+Person(patient, "Patient", "A patient of the platform")
+Person(physician, "Physician", "Has appointments with patients")
+Person(admin, "Admin", "Manages system and monitors observability")
+
+rectangle "Hospital Administration System (HAP)" as HAP #line.dashed {
+
+    ' ==========================================
+    ' API LAYER
+    ' ==========================================
+    Container(Gateway, "API Gateway", "nginx", "Routes API requests\n(Port 8080)")
+
+    ' ==========================================
+    ' BUSINESS SERVICES
+    ' ==========================================
+    Container(PatientService, "Patient Service", "Java Spring Boot", "Manages patient information\nUses own JWT auth\n(Ports 3000, 3001)")
+    Container(AppointmentService, "Appointment Service", "Java Spring Boot", "Manages appointments\nUses own JWT auth\n(Ports 4000, 4001)")
+    Container(PhysicianCommandService, "Physician Command Service", "Java Spring Boot", "Write operations (CQRS)\nUses Keycloak\n(Ports 5000, 5002)")
+    Container(PhysicianQueryService, "Physician Query Service", "Java Spring Boot", "Read operations (CQRS)\nUses Keycloak\n(Ports 5001, 5003)")
+
+    ' ==========================================
+    ' INFRASTRUCTURE SERVICES
+    ' ==========================================
+    Container(Keycloak, "Keycloak", "Keycloak", "Authentication & Authorization\n(Port 8180)")
+    Container(RabbitMQ, "RabbitMQ", "RabbitMQ", "Message broker\n(Port 5672)")
+
+    ' ==========================================
+    ' DATA STORAGE
+    ' ==========================================
+    ContainerDb(PatientDatabase, "Patient Database", "PostgreSQL", "Patient data\n(sidis_patients_db_1, _2)")
+    ContainerDb(AppointmentDatabase, "Appointment Database", "PostgreSQL", "Appointment data\n(sidis_appointments_db_1, _2)")
+    ContainerDb(PhysicianWriteDatabase, "Physician Write DB", "PostgreSQL", "Event Store\n(sidis_physicians_db)")
+    ContainerDb(PhysicianReadDatabase, "Physician Read DB", "MongoDB", "Read Model\n(hap_physicians_read)")
+    ContainerDb(KeycloakDatabase, "Keycloak Database", "PostgreSQL", "Keycloak data\n(sidis_keycloak_db)")
+
+    ' ==========================================
+    ' OBSERVABILITY STACK
+    ' ==========================================
+    Container(Grafana, "Grafana", "Grafana", "Observability dashboard\n(Port 3030)")
+    Container(Loki, "Loki", "Loki", "Log aggregation\n(Port 3100)")
+    Container(Tempo, "Tempo", "Tempo", "Distributed tracing\n(Ports 3200, 4318)")
+    Container(Prometheus, "Prometheus", "Prometheus", "Metrics collection\n(Port 9090)")
+    Container(Alloy, "Alloy", "Alloy", "Collection agent\n(Port 12345)")
+}
+
+' ==========================================
+' USER RELATIONSHIPS
+' ==========================================
+Rel(patient, Gateway, "Uses")
+Rel(physician, Gateway, "Uses")
+Rel(admin, Grafana, "Monitors")
+Rel(admin, Gateway, "Manages")
+
+' ==========================================
+' API ROUTING
+' ==========================================
+Rel(Gateway, PatientService, "Routes to")
+Rel(Gateway, AppointmentService, "Routes to")
+Rel(Gateway, PhysicianCommandService, "Routes to")
+Rel(Gateway, PhysicianQueryService, "Routes to")
+
+' ==========================================
+' SERVICE INTERACTIONS
+' ==========================================
+Rel(AppointmentService, PatientService, "Requests info")
+Rel(AppointmentService, PhysicianQueryService, "Requests info")
+
+' ==========================================
+' DATABASE CONNECTIONS
+' ==========================================
+Rel(PatientService, PatientDatabase, "Reads/Writes")
+Rel(AppointmentService, AppointmentDatabase, "Reads/Writes")
+Rel(PhysicianCommandService, PhysicianWriteDatabase, "Writes")
+Rel(PhysicianQueryService, PhysicianReadDatabase, "Reads")
+Rel(Keycloak, KeycloakDatabase, "Reads/Writes")
+
+' ==========================================
+' EVENT-DRIVEN COMMUNICATION (RabbitMQ)
+' ==========================================
+' All services use RabbitMQ for event-driven architecture
+Rel(PatientService, RabbitMQ, "Publishes/Consumes events")
+Rel(AppointmentService, RabbitMQ, "Publishes/Consumes events")
+Rel(PhysicianCommandService, RabbitMQ, "Publishes events")
+Rel(RabbitMQ, PhysicianQueryService, "Consumes events")
+
+' ==========================================
+' AUTHENTICATION
+' ==========================================
+' Note: PatientService and AppointmentService use their own JWT authentication
+' Only Physician services use Keycloak
+Rel(PhysicianCommandService, Keycloak, "Validates tokens")
+Rel(PhysicianQueryService, Keycloak, "Validates tokens")
+
+' ==========================================
+' OBSERVABILITY - LOGS
+' ==========================================
+Rel(PatientService, Alloy, "Logs")
+Rel(AppointmentService, Alloy, "Logs")
+Rel(PhysicianCommandService, Alloy, "Logs")
+Rel(PhysicianQueryService, Alloy, "Logs")
+Rel(Alloy, Loki, "Forwards logs")
+
+' ==========================================
+' OBSERVABILITY - METRICS
+' ==========================================
+Rel(PatientService, Prometheus, "Metrics")
+Rel(AppointmentService, Prometheus, "Metrics")
+Rel(PhysicianCommandService, Prometheus, "Metrics")
+Rel(PhysicianQueryService, Prometheus, "Metrics")
+
+' ==========================================
+' OBSERVABILITY - TRACES
+' ==========================================
+Rel(PatientService, Tempo, "Traces")
+Rel(AppointmentService, Tempo, "Traces")
+Rel(PhysicianCommandService, Tempo, "Traces")
+Rel(PhysicianQueryService, Tempo, "Traces")
+
+' ==========================================
+' OBSERVABILITY - VISUALIZATION
+' ==========================================
+Rel(Grafana, Loki, "Queries")
+Rel(Grafana, Tempo, "Queries")
+Rel(Grafana, Prometheus, "Queries")
+
+@enduml

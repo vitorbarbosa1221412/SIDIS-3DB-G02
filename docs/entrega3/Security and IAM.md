@@ -58,7 +58,7 @@ The authentication process follows the standard OpenID Connect flow with a speci
 Infrastructure Update: To support this security layer, the docker-compose.yml was updated to include:
 
     -Keycloak Container: Running on port 8180 (mapped to host) and 8080 (internal), backed by its own Postgres database (sidis_keycloak_db).
-    - Network: All services, including Keycloak and the Microservices, share the common sidis-network to allow direct internal communication for key fetching.
+    -Network: All services, including Keycloak and the Microservices, share the common sidis-network to allow direct internal communication for key fetching.
 
 
 ## Accessing Keycloak:

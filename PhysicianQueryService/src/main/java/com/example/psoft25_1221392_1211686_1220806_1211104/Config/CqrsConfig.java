@@ -63,9 +63,8 @@ public class CqrsConfig {
             }
         });
 
-        // Assumindo que o teu InMemoryQueryDispatcher tem este método público
-        // Se não tiver, terás de o adicionar na classe InMemoryQueryDispatcher
-        // queryDispatcher.setHandlers(queryMap);
+
+         queryDispatcher.setHandlers(queryMap);
 
         // Alternativa se o dispatcher não tiver setter:
         // O ideal seria passar o map no construtor do Bean, mas como estamos a usar PostConstruct:

@@ -26,12 +26,30 @@ scrape_configs:
         labels:
           service: "appointment-service"
 
-  # Physician Service Metrics
-  - job_name: "physician_service"
+  # Physician Command Service Metrics (Write Operations - CQRS)
+  - job_name: "physician_command_service"
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true  # Physician services use self-signed certs inside cluster
     metrics_path: "/internal/prometheus"  # Spring Boot Actuator endpoint
     static_configs:
       - targets: 
-          - "physician-service-1:5000"  # Physician Service Instance 1
-          - "physician-service-2:5001"  # Physician Service Instance 2
+          - "physician-command-service-1:5000"  # Physician Command Service Instance 1
+          - "physician-command-service-2:5002"  # Physician Command Service Instance 2
         labels:
-          service: "physician-service"
+          service: "physician-command-service"
+          operation_type: "write"
+
+  # Physician Query Service Metrics (Read Operations - CQRS)
+  - job_name: "physician_query_service"
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true  # Physician services use self-signed certs inside cluster
+    metrics_path: "/internal/prometheus"  # Spring Boot Actuator endpoint
+    static_configs:
+      - targets: 
+          - "physician-query-service-1:5001"  # Physician Query Service Instance 1
+          - "physician-query-service-2:5003"  # Physician Query Service Instance 2
+        labels:
+          service: "physician-query-service"
+          operation_type: "read"

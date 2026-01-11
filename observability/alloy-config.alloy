@@ -8,9 +8,14 @@ local.file_match "appointment_logs" {
     path_targets = [{"__path__" = "/var/log/sidis/appointment-service/app.log", "service" = "appointment-service"}]
 }
 
-// Physician Service Logs
-local.file_match "physician_logs" {
-    path_targets = [{"__path__" = "/var/log/sidis/physician-service/app.log", "service" = "physician-service"}]
+// Physician Command Service Logs (Write Operations - CQRS)
+local.file_match "physician_command_logs" {
+    path_targets = [{"__path__" = "/var/log/sidis/physician-command-service/app.log", "service" = "physician-command-service"}]
+}
+
+// Physician Query Service Logs (Read Operations - CQRS)
+local.file_match "physician_query_logs" {
+    path_targets = [{"__path__" = "/var/log/sidis/physician-query-service/app.log", "service" = "physician-query-service"}]
 }
 
 // Collect Patient Service Logs
@@ -25,10 +30,16 @@ loki.source.file "appointment_files" {
     forward_to = [loki.process.appointment_logs.receiver]
 }
 
-// Collect Physician Service Logs
-loki.source.file "physician_files" {
-    targets    = local.file_match.physician_logs.targets
-    forward_to = [loki.process.physician_logs.receiver]
+// Collect Physician Command Service Logs
+loki.source.file "physician_command_files" {
+    targets    = local.file_match.physician_command_logs.targets
+    forward_to = [loki.process.physician_command_logs.receiver]
+}
+
+// Collect Physician Query Service Logs
+loki.source.file "physician_query_files" {
+    targets    = local.file_match.physician_query_logs.targets
+    forward_to = [loki.process.physician_query_logs.receiver]
 }
 
 // Process Patient Service Logs
@@ -63,8 +74,8 @@ loki.process "appointment_logs" {
     forward_to = [loki.write.local_loki.receiver]
 }
 
-// Process Physician Service Logs
-loki.process "physician_logs" {
+// Process Physician Command Service Logs
+loki.process "physician_command_logs" {
     stage.logfmt {
         mapping = {
             "extracted_level" = "level",
@@ -73,7 +84,23 @@ loki.process "physician_logs" {
     stage.labels {
         values = {
             "level" = "extracted_level",
-            "service" = "physician-service",
+            "service" = "physician-command-service",
+        }
+    }
+    forward_to = [loki.write.local_loki.receiver]
+}
+
+// Process Physician Query Service Logs
+loki.process "physician_query_logs" {
+    stage.logfmt {
+        mapping = {
+            "extracted_level" = "level",
+        }
+    }
+    stage.labels {
+        values = {
+            "level" = "extracted_level",
+            "service" = "physician-query-service",
         }
     }
     forward_to = [loki.write.local_loki.receiver]

@@ -15,8 +15,8 @@ services:
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
     networks:
       - sidis-network
 
@@ -36,6 +36,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sidis-network
+
+  sidis-keycloak:
+    image: quay.io/keycloak/keycloak:22.0.0
+    container_name: sidis-keycloak
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/sidis_keycloak_db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: UoU4CrIoGNgOtK31
+      KC_HOSTNAME: localhost
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - sidis-network
 
@@ -73,6 +93,8 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8180/realms/sidis-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://sidis-keycloak:8080/realms/sidis-realm/protocol/openid-connect/certs
       PATIENT_PEER_URLS: https://patient-service-2:3001
     ports:
       - "3000:3000"
@@ -105,6 +127,8 @@ services:
       SERVER_PORT: 3001
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8180/realms/sidis-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://sidis-keycloak:8080/realms/sidis-realm/protocol/openid-connect/certs
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
       PATIENT_PEER_URLS: https://patient-service-1:3000
@@ -197,6 +221,10 @@ services:
         SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
         SPRING_RABBITMQ_HOST: rabbitmq
         SPRING_RABBITMQ_PORT: 5672
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8180/realms/sidis-realm
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://sidis-keycloak:8080/realms/sidis-realm/protocol/openid-connect/certs
+        LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: TRACE
+        LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_OAUTH2: TRACE
         PATIENT_SERVICE_URL: https://patient-service-1:3000/api
       ports:
         - "5000:5000"
@@ -222,6 +250,10 @@ services:
         SPRING_DATASOURCE_USERNAME: postgres
         SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
         SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8180/realms/sidis-realm
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://sidis-keycloak:8080/realms/sidis-realm/protocol/openid-connect/certs
+        LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: TRACE
+        LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_OAUTH2: TRACE
         SPRING_RABBITMQ_PORT: 5672
         PATIENT_SERVICE_URL: https://patient-service-2:3001/api
       ports:
@@ -248,6 +280,8 @@ services:
         SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/hap_physicians_read
         SPRING_RABBITMQ_HOST: rabbitmq
         SPRING_RABBITMQ_PORT: 5672
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8180/realms/sidis-realm
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://sidis-keycloak:8080/realms/sidis-realm/protocol/openid-connect/certs
       ports:
         - "5001:5001"
       volumes:
@@ -272,6 +306,8 @@ services:
         SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/hap_physicians_read
         SPRING_RABBITMQ_HOST: rabbitmq
         SPRING_RABBITMQ_PORT: 5672
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8180/realms/sidis-realm
+        SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://sidis-keycloak:8080/realms/sidis-realm/protocol/openid-connect/certs
       ports:
         - "5003:5003"
       volumes:

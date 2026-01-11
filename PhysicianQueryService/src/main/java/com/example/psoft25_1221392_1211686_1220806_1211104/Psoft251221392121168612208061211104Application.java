@@ -2,10 +2,12 @@ package com.example.psoft25_1221392_1211686_1220806_1211104;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 public class Psoft251221392121168612208061211104Application {
 
     public static void main(String[] args) {

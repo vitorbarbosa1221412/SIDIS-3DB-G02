@@ -14,11 +14,13 @@ The SIDIS Healthcare System uses **Nginx** as an API Gateway to provide a single
                              │
                 ┌────────────┼────────────┐
                 │            │            │
-        ┌───────▼──────┐ ┌───▼──────┐ ┌──▼──────────┐
-        │ Appointments │ │Physicians│ │   Patients  │
-        │  Service     │ │ Service  │ │  Service   │
-        │  (4000/4001) │ │(5000/5001)│ │ (3000/3001)│
-        └──────────────┘ └───────────┘ └────────────┘
+        ┌───────▼──────┐ ┌───▼──────────────┐ ┌──▼──────────┐
+        │ Appointments │ │   Physicians     │ │   Patients  │
+        │  Service     │ │  (CQRS Pattern)  │ │  Service   │
+        │  (4000/4001) │ │                  │ │ (3000/3001)│
+        └──────────────┘ │ Command:5000/5002│ └────────────┘
+                         │ Query:  5001/5003 │
+                         └──────────────────┘
 ```
 
 ## Gateway Features
@@ -57,16 +59,42 @@ The SIDIS Healthcare System uses **Nginx** as an API Gateway to provide a single
   (or appointment-service-2:4001, depending on load)
   ```
 
-### Physicians Service
+### Physicians Service (CQRS Pattern)
 - **Route**: `/api/physicians/*`
-- **Backend**: `physician-service-1:5000`, `physician-service-2:5001`
-- **Protocol**: HTTP
-- **Load Balancing**: Least connections algorithm
+- **Architecture**: Command Query Responsibility Segregation (CQRS)
+- **Protocol**: HTTPS
+- **Routing Logic**: Based on HTTP method
+  - **GET/HEAD requests** → Query Service (read operations)
+  - **POST/PUT/PATCH/DELETE requests** → Command Service (write operations)
+
+#### Query Service (Read Operations)
+- **Backend**: `physician-query-service-1:5001`, `physician-query-service-2:5003`
+- **Database**: MongoDB (read-optimized)
+- **Endpoints**:
+  - `GET /api/physicians/{id}` - Get physician by ID
+  - `GET /api/physicians/number/{number}` - Get physician by number
+  - `GET /api/physicians/workinghours/{physicianNumber}` - Get working hours
+  - `GET /api/physicians?name={name}&page={page}&limit={limit}` - Search by name
+  - `GET /api/physicians?specialty={specialty}&page={page}&limit={limit}` - Search by specialty
 - **Example**:
   ```
   GET http://localhost:8080/api/physicians/search?name=Dr.Smith
-  → http://physician-service-1:5000/api/physicians/search?name=Dr.Smith
-  (or physician-service-2:5001, depending on load)
+  → https://physician-query-service-1:5001/api/physicians?name=Dr.Smith
+  (or physician-query-service-2:5003, depending on load)
+  ```
+
+#### Command Service (Write Operations)
+- **Backend**: `physician-command-service-1:5000`, `physician-command-service-2:5002`
+- **Database**: PostgreSQL (write store)
+- **Endpoints**:
+  - `POST /api/physicians` - Create physician (multipart/form-data)
+  - `PUT /api/physicians/{physicianNumber}` - Update physician
+  - `GET /api/physicians/assign/{physicianId}/{patientId}` - Assign patient to physician
+- **Example**:
+  ```
+  POST http://localhost:8080/api/physicians
+  → https://physician-command-service-1:5000/api/physicians
+  (or physician-command-service-2:5002, depending on load)
   ```
 
 ### Patients Service
@@ -96,12 +124,28 @@ upstream appointments_service {
     keepalive 32;
 }
 
-# Physicians Service
-upstream physicians_service {
+# Physicians Service (CQRS Pattern)
+# Query Service (Read Operations - GET/HEAD)
+upstream physician_query_backend {
     least_conn;
-    server physician-service-1:5000 max_fails=3 fail_timeout=30s;
-    server physician-service-2:5001 max_fails=3 fail_timeout=30s;
+    server physician-query-service-1:5001 max_fails=3 fail_timeout=30s;
+    server physician-query-service-2:5003 max_fails=3 fail_timeout=30s;
     keepalive 32;
+}
+
+# Command Service (Write Operations - POST/PUT/PATCH/DELETE)
+upstream physician_command_backend {
+    least_conn;
+    server physician-command-service-1:5000 max_fails=3 fail_timeout=30s;
+    server physician-command-service-2:5002 max_fails=3 fail_timeout=30s;
+    keepalive 32;
+}
+
+# Map to route based on HTTP method
+map $request_method $physician_upstream {
+    GET     physician_query_backend;
+    HEAD    physician_query_backend;
+    default physician_command_backend;
 }
 
 # Patients Service (HTTPS backend)
@@ -178,6 +222,15 @@ The Patient Service uses HTTPS internally. The gateway:
 - Uses variable-based proxy_pass for proper SNI (Server Name Indication) handling
 - Disables SSL verification (for self-signed certificates in development)
 - Uses Docker's internal DNS resolver for dynamic hostname resolution
+
+### Physician Services (HTTPS Backend - CQRS)
+
+Both Physician Command and Query Services use HTTPS internally. The gateway:
+- Routes GET/HEAD requests to Query Service (HTTPS)
+- Routes POST/PUT/PATCH/DELETE requests to Command Service (HTTPS)
+- Uses method-based routing via `map` directive
+- Disables SSL verification (for self-signed certificates in development)
+- Removes `/api/physicians/` prefix before forwarding to backend
 
 **Configuration**:
 ```nginx
@@ -264,7 +317,8 @@ networks:
 
 The gateway expects these exact container names:
 - `appointment-service-1`, `appointment-service-2`
-- `physician-service-1`, `physician-service-2`
+- `physician-command-service-1`, `physician-command-service-2` (write operations)
+- `physician-query-service-1`, `physician-query-service-2` (read operations)
 - `patient-service-1`, `patient-service-2`
 
 ## Deployment
@@ -285,8 +339,10 @@ nginx:
   depends_on:
     - appointment-service-1
     - appointment-service-2
-    - physician-service-1
-    - physician-service-2
+    - physician-command-service-1
+    - physician-command-service-2
+    - physician-query-service-1
+    - physician-query-service-2
     - patient-service-1
     - patient-service-2
   networks:
@@ -324,8 +380,16 @@ done
 # Test appointments route
 curl http://localhost:8080/api/appointments/patient/PAT-001/history
 
-# Test physicians route
+# Test physicians routes (CQRS)
+# Read operation (GET) → Query Service
 curl http://localhost:8080/api/physicians/search?name=Dr.Smith
+curl http://localhost:8080/api/physicians/1
+curl http://localhost:8080/api/physicians/number/PHY-2025-1
+
+# Write operation (POST) → Command Service
+curl -X POST http://localhost:8080/api/physicians \
+  -F "physician={\"name\":\"Dr. Smith\",\"specialty\":\"Cardiology\"}" \
+  -F "image=@photo.jpg"
 
 # Test patients route
 curl http://localhost:8080/api/patients/number/PAT-001
@@ -344,11 +408,61 @@ curl http://localhost:8080/nginx-health
 Full configuration file: `nginx/nginx.conf`
 
 Key sections:
-- Lines 5-27: Upstream definitions
-- Lines 29-35: Patient Service backend selection map
-- Lines 37-143: Server block with routing rules
-- Lines 93-95: Appointments routing
-- Lines 100-102: Physicians routing
-- Lines 107-120: Patients routing (HTTPS with load balancing)
-- Lines 125-131: Actuator routing
+- Lines 8-13: Appointments Service upstream
+- Lines 18-34: Physician Services upstreams (CQRS pattern with method-based routing)
+- Lines 39-51: Patients Service upstream and backend selection map
+- Lines 97-100: Appointments routing
+- Lines 105-116: Physicians routing (CQRS - method-based routing to Command/Query services)
+- Lines 121-131: Patients routing (HTTPS with load balancing)
+- Lines 136-143: Default/Actuator routing
+
+## CQRS Pattern for Physician Service
+
+The Physician Service implements the **Command Query Responsibility Segregation (CQRS)** pattern:
+
+### Architecture Overview
+
+```
+                    API Gateway
+                         │
+                         │ /api/physicians/*
+                         │
+            ┌────────────┴────────────┐
+            │                         │
+    GET/HEAD │              POST/PUT/ │
+            │                         │
+    ┌───────▼──────┐        ┌─────────▼────────┐
+    │ Query Service│        │ Command Service  │
+    │  (Read Only) │        │  (Write Only)   │
+    │              │        │                  │
+    │ MongoDB      │        │ PostgreSQL      │
+    │ (Read Store) │        │ (Write Store)   │
+    └──────────────┘        └─────────────────┘
+            │                         │
+            └────────────┬────────────┘
+                         │
+                    RabbitMQ
+              (Event Synchronization)
+```
+
+### Benefits
+
+1. **Performance**: Read operations use MongoDB (optimized for queries)
+2. **Scalability**: Read and write services can scale independently
+3. **Separation of Concerns**: Clear separation between read and write operations
+4. **Event-Driven**: Changes in Command Service are synchronized to Query Service via RabbitMQ
+
+### Routing Logic
+
+The gateway automatically routes requests based on HTTP method:
+
+- **Read Operations** (GET, HEAD) → Query Service
+  - Fast queries from MongoDB
+  - No state changes
+  - Can be cached/optimized independently
+
+- **Write Operations** (POST, PUT, PATCH, DELETE) → Command Service
+  - State changes in PostgreSQL
+  - Events published to RabbitMQ
+  - Query Service eventually updated via event handlers
 

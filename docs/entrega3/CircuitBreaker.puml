@@ -1,0 +1,38 @@
+@startuml CircuitBreakerStop
+
+title Circuit Breaker OPEN – Physician Service Unavailable
+
+actor Patient
+participant Gateway as "API Gateway"
+participant AppointmentController
+participant AppointmentService
+participant CircuitBreaker as "Resilience4j CircuitBreaker"
+participant PhysicianServiceClient
+participant PhysicianService
+
+Patient -> Gateway : Schedule appointment
+Gateway -> AppointmentController : POST /scheduleAppointment
+AppointmentController -> AppointmentService : scheduleAppointmentByPatient()
+
+activate AppointmentService
+
+AppointmentService -> CircuitBreaker : getWorkingHours()
+activate CircuitBreaker
+
+note right of CircuitBreaker
+Failure threshold exceeded
+Circuit state = OPEN
+end note
+
+CircuitBreaker --> AppointmentService : Call blocked (OPEN)
+deactivate CircuitBreaker
+
+AppointmentService -> AppointmentService : Fallback method invoked
+
+AppointmentService --> AppointmentController : 503 SERVICE_UNAVAILABLE
+deactivate AppointmentService
+
+AppointmentController --> Gateway : 503 SERVICE_UNAVAILABLE
+Gateway --> Patient : Error: Physician service unavailable
+
+@enduml

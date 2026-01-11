@@ -1,9 +1,7 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.messaging.publisher;
 
 import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.messaging.config.RabbitMQConfig;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.messaging.dto.PatientCreatedEvent;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.messaging.dto.PatientUpdatedEvent;
-import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.messaging.dto.PatientDeletedEvent;
+import com.example.psoft25_1221392_1211686_1220806_1211104.patientmanagement.messaging.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -60,5 +58,39 @@ public class PatientEventPublisher {
             log.error("Failed to publish PatientDeletedEvent: {}", e.getMessage(), e);
         }
     }
+
+    public void publishPatientBookedEvent(PatientBookedEvent event) {
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.PATIENT_EXCHANGE,
+                    RabbitMQConfig.PATIENT_BOOKED_ROUTING_KEY,
+                    event
+            );
+            log.info(
+                    "Published PatientBookedEvent for appointment {}",
+                    event.getAppointmentNumber()
+            );
+        } catch (Exception e) {
+            log.error("Failed to publish PatientBookedEvent", e);
+        }
+    }
+
+    public void publishPatientBookedFailEvent(PatientBookedFailEvent event) {
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.PATIENT_EXCHANGE,
+                    RabbitMQConfig.PATIENT_BOOKED_FAIL_ROUTING_KEY,
+                    event
+            );
+            log.info(
+                    "Published PatientBookedFailEvent for appointment {}",
+                    event.getAppointmentNumber()
+            );
+        } catch (Exception e) {
+            log.error("Failed to publish PatientBookedFailEvent", e);
+        }
+    }
+
+
 }
 

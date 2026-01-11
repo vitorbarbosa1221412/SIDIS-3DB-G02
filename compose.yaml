@@ -216,7 +216,7 @@ services:
       environment:
         SPRING_PROFILES_ACTIVE: bootstrap
         SERVER_PORT: 5000
-        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db_1
         SPRING_DATASOURCE_USERNAME: postgres
         SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
         SPRING_RABBITMQ_HOST: rabbitmq
@@ -246,7 +246,7 @@ services:
       environment:
         SPRING_PROFILES_ACTIVE: bootstrap
         SERVER_PORT: 5002
-        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db?stringtype=unspecified
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sidis_physicians_db_2
         SPRING_DATASOURCE_USERNAME: postgres
         SPRING_DATASOURCE_PASSWORD: UoU4CrIoGNgOtK31
         SPRING_RABBITMQ_HOST: rabbitmq

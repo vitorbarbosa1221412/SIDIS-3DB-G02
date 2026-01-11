@@ -30,6 +30,7 @@ public class RabbitMQConfig {
     // Queue names for listening to other services
     public static final String APPOINTMENT_EVENTS_QUEUE = "appointment.events.patient.queue";
     public static final String PHYSICIAN_EVENTS_QUEUE = "physician.events.patient.queue";
+    public static final String PATIENTS_EVENTS_QUEUE = "patients.events.patient.queue";
 
     // Routing keys
     public static final String PATIENT_CREATED_ROUTING_KEY = "patient.created";
@@ -110,7 +111,7 @@ public class RabbitMQConfig {
     @Bean
     public Binding appointmentRequestedBinding() {
         return BindingBuilder
-                .bind(patientDeletedQueue())
+                .bind(appointmentRequestedQueue())
                 .to(patientExchange())
                 .with(APPOINTMENT_REQUESTED_ROUTING_KEY);
     }

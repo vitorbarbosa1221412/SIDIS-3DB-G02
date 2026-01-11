@@ -1,5 +1,6 @@
 package com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.services;
 
+import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.infrastructure.repositories.impl.PhysicianServiceClient;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.infrastructure.repositories.impl.SpringDataAppointmentRepository;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.messaging.dto.AppointmentRequestedEvent;
 import com.example.psoft25_1221392_1211686_1220806_1211104.appointmentmanagement.messaging.publisher.AppointmentEventPublisher;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AppointmentServiceImpl implements AppointmentService {
+
+    @Autowired
+    private PhysicianServiceClient physicianServiceClient;
 
     @Value("${server.instance.id:patient-service-1}")
     private String instanceId;
@@ -121,7 +125,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         String physicianUrl = url_physician + ":" + physicianPort + "/api/physicians/workinghours/" + physicianNumber;
 
-        String physicianWorkingHours = restTemplate.getForObject(physicianUrl, String.class);
+        String physicianWorkingHours = physicianServiceClient.getWorkingHours(physicianNumber);
 
         // 1. Obter o médico
         // Physician physician = physicianRepository.findByPhysicianNumber(physicianNumber)

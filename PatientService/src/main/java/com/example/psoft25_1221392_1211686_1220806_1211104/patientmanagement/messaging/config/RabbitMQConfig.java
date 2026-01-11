@@ -30,6 +30,11 @@ public class RabbitMQConfig {
     public static final String APPOINTMENT_EVENTS_QUEUE = "appointment.events.patient.queue";
     public static final String PHYSICIAN_EVENTS_QUEUE = "physician.events.patient.queue";
 
+    // Saga routing keys
+    public static final String PATIENT_BOOKED_ROUTING_KEY = "patient.booked";
+    public static final String PATIENT_BOOKED_FAIL_ROUTING_KEY = "patient.booked.fail";
+
+
     // Routing keys
     public static final String PATIENT_CREATED_ROUTING_KEY = "patient.created";
     public static final String PATIENT_UPDATED_ROUTING_KEY = "patient.updated";

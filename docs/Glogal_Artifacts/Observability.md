@@ -5,16 +5,16 @@ Several tools were considered for the implementation, and a comparison can be se
 
 
 | Tool          | Open Source | Strengths                               | Limitations                          |
-|---------------|-------------|-----------------------------------------|--------------------------------------|
-| Prometheus    | Yes         | Reliability and scalability             | Does not support tracing or logs     |
-| Grafana       | Yes         | Sophisticated visualization             | Does not collect data natively       |
-| Zipkin        | Yes         | Latency diagnosis and tracing           | Does not include metrics or logs     |
-| Weave Scope   | Yes         | Container monitoring                    | Does not support tracing             |
-| Loki          | Yes         | Economical log management               | Logs only                            |
-| OpenTelemetry | Yes         | Comprehensive framework                 | Requires external storage            |
-| BPFTrace      | Yes         | Dynamic tracing                         | Low-level observability              |
-| Istio         | Yes         | Traffic management                      | High complexity                      |
-| Jaeger        | Yes         | Service analysis                        | Tracing only                         |
+|---------------|------|-----------------------------------------|--------------------------------------|
+| Prometheus    | Yes  | Reliability and scalability             | Does not support tracing or logs     |
+| Grafana       | Yes  | Sophisticated visualization             | Does not collect data natively       |
+| Zipkin        | Yes  | Latency diagnosis and tracing           | Does not include metrics or logs     |
+| Weave Scope   | Yes  | Container monitoring                    | Does not support tracing             |
+| Loki          | Yes  | Economical log management               | Logs only                            |
+| OpenTelemetry | Yes  | Comprehensive framework                 | Requires external storage            |
+| BPFTrace      | Yes  | Dynamic tracing                         | Low-level observability              |
+| Istio         | Yes  | Traffic management                      | High complexity                      |
+| Jaeger        | Yes  | Service analysis                        | Tracing only                         |
 
 
 
